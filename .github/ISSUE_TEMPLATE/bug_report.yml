@@ -1,0 +1,14 @@
+name: Bug report
+description: Report a problem
+body:
+  - type: textarea
+    attributes:
+      label: What happened
+    validations: { required: true }
+  - type: textarea
+    attributes:
+      label: Diagnostic report
+      description: In the app, use "Export Diagnostic Report" and paste/attach it here. This is the most important part of the report.
+    validations: { required: true }
+  - type: input
+    attributes: { label: "Error code (if shown)" }

@@ -1,0 +1,9 @@
+[project]
+name = "ubuntu-hibernate-wizard"
+version = "0.1.0"
+description = "GUI wizard to enable, repair, and verify hibernation on Ubuntu"
+requires-python = ">=3.11"
+license = {text = "GPL-3.0-or-later"}
+
+[project.scripts]
+ubuntu-hibernate-wizard = "ubuntu_hibernate_wizard.main:main"

@@ -1,0 +1,14 @@
+name: Package
+on:
+  push:
+    tags: ['v*']
+jobs:
+  deb:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y lintian
+      - run: make deb
+      - run: lintian dist/*.deb || true
+      - uses: softprops/action-gh-release@v2
+        with: { files: dist/*.deb }

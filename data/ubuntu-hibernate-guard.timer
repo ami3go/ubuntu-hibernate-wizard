@@ -1,0 +1,9 @@
+[Unit]
+Description=Run hibernate configuration check shortly after boot
+
+[Timer]
+OnBootSec=3min
+Persistent=false
+
+[Install]
+WantedBy=timers.target

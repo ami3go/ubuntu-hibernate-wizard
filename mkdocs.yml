@@ -1,0 +1,19 @@
+site_name: Hibernate Wizard for Ubuntu
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle: { icon: material/weather-night, name: Dark mode }
+    - scheme: slate
+      toggle: { icon: material/weather-sunny, name: Light mode }
+markdown_extensions: [admonition, tables, pymdownx.superfences]
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - How Hibernation Works: how-hibernation-works.md
+  - Troubleshooting: troubleshooting.md
+  - Rollback & Recovery: rollback-and-recovery.md
+  - Architecture: architecture.md
+  - Testing: testing.md
+  - FAQ: faq.md

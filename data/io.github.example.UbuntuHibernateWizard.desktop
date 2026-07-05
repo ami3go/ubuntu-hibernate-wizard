@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Ubuntu Hibernate Wizard
+Comment=Enable, repair, and verify hibernation
+Exec=ubuntu-hibernate-wizard
+Icon=io.github.example.UbuntuHibernateWizard
+Terminal=false
+Type=Application
+Categories=System;Settings;
+Keywords=hibernate;suspend;swap;resume;

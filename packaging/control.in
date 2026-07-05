@@ -1,0 +1,13 @@
+Package: ubuntu-hibernate-wizard
+Version: @VERSION@
+Architecture: all
+Maintainer: Ubuntu Hibernate Wizard Project <example@example.org>
+Section: admin
+Priority: optional
+Depends: python3 (>= 3.11), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, pkexec, polkitd, initramfs-tools, grub-common, util-linux, e2fsprogs
+Recommends: mokutil, gnome-shell
+Description: GUI wizard to enable, repair, and verify hibernation on Ubuntu
+ Guides the user through creating swap, setting resume=UUID and
+ resume_offset kernel parameters, updating GRUB and initramfs, and
+ verifying the configuration after reboot. Crash-safe swap resize,
+ backups, and one-click repair of stale resume offsets.

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Hibernate configuration watcher
+Comment=Notifies if hibernation configuration drifts (no-op while guard disabled)
+Exec=ubuntu-hibernate-wizard --guard-notify
+X-GNOME-Autostart-Delay=60
+NoDisplay=true

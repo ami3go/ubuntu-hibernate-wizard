@@ -1,0 +1,16 @@
+name: Docs
+on:
+  push:
+    branches: [main]
+permissions: { pages: write, id-token: write, contents: read }
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment: { name: github-pages }
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install mkdocs-material
+      - run: mkdocs build
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+      - uses: actions/deploy-pages@v4

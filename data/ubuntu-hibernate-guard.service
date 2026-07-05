@@ -1,0 +1,10 @@
+[Unit]
+Description=Hibernate Wizard configuration health check (detection only)
+Documentation=https://example.github.io/ubuntu-hibernate-wizard/
+ConditionPathExists=/var/lib/ubuntu-hibernate-wizard/enabled
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/usr/bin/ubuntu-hibernate-wizard --guard-check

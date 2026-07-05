@@ -1,0 +1,50 @@
+ubuntu-hibernate-wizard (0.2.0-1) noble; urgency=medium
+
+  * Spec v1.8: CLI verify mode (--verify --json, exit codes 0/2/3).
+  * Boot-time guard service+timer and session notify watcher (shipped inert).
+  * State schema v1 with swap_preexisting provenance.
+  * Extended purge rules per SS17.3.
+
+ -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 12:00:00 +0000
+
+ubuntu-hibernate-wizard (0.1.0-1) noble; urgency=medium
+
+  * Initial release.
+
+ -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 10:00:00 +0000
+
+ubuntu-hibernate-wizard (0.2.1-1) noble; urgency=medium
+
+  * Fix uninstallable dependency: policykit-1 is transitional/removed on
+    modern Ubuntu; depend on pkexec + polkitd instead.
+
+ -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 13:00:00 +0000
+
+ubuntu-hibernate-wizard (0.3.0-1) noble; urgency=medium
+
+  * GUI: Back and Next buttons on every wizard page (System Check is no
+    longer a dead end).
+  * GUI: full flow wired end-to-end: Swap size -> Plan -> Apply with live
+    progress -> Reboot -> Verify -> Repair.
+  * Welcome page gains "Verify existing configuration" shortcut for the
+    post-reboot flow.
+  * Detection runs in a background thread with a spinner; failures show an
+    error row and Back still works.
+
+ -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 14:00:00 +0000
+
+ubuntu-hibernate-wizard (0.3.1-1) noble; urgency=medium
+
+  * Swap page: detected RAM shown; size slider with marks mapped at
+    Minimum (=RAM), Recommended (RAM+2GB) and Double RAM; presets snap
+    the slider; slider allows any custom size up to 2.5x RAM.
+
+ -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 15:00:00 +0000
+
+ubuntu-hibernate-wizard (0.3.2-1) noble; urgency=medium
+
+  * Swap slider: Recommended mark moved above the track so labels can no
+    longer overlap; single-line mark labels; wider GNOME-Disks-style track
+    with unlabeled 4 GB ticks.
+
+ -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 16:00:00 +0000
