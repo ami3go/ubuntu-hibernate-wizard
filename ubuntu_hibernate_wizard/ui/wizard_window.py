@@ -5,7 +5,9 @@ Long operations run in worker threads; UI updates via GLib.idle_add.
 """
 from __future__ import annotations
 
+import datetime
 import threading
+from pathlib import Path
 
 import gi
 gi.require_version("Gtk", "4.0")
@@ -13,6 +15,8 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk, GLib  # noqa: E402
 
 APP_ID = "io.github.example.UbuntuHibernateWizard"
+HIBERNATE_STATUS_EXTENSION_URL = "https://extensions.gnome.org/extension/755/hibernate-status-button/"
+SYSTEM_ACTION_HIBERNATE_EXTENSION_URL = "https://extensions.gnome.org/extension/3814/system-action-hibernate/"
 
 SIZES = [("Minimum", 1.0, "Equal to RAM"),
          ("Recommended", None, "RAM + 2 GB safety margin"),
@@ -30,6 +34,8 @@ class WizardWindow(Adw.ApplicationWindow):
         self.controller = controller
         self.detect_info = None
         self.swap_size_mb = 18 * 1024
+        self._apply_log_lines: list[str] = []
+        self._apply_log_path: str | None = None
         Adw.StyleManager.get_default().set_color_scheme(Adw.ColorScheme.DEFAULT)
 
         self.nav = Adw.NavigationView()
@@ -109,7 +115,7 @@ class WizardWindow(Adw.ApplicationWindow):
                                next_label="Continue", next_sensitive=False,
                                next_cb=lambda *_: self.nav.push(
                                    self._check_page()),
-                               caption="Step 1 of 6 - nothing is changed "
+                               caption="Step 1 of 7 - nothing is changed "
                                        "until you approve the plan")
         consent.connect("toggled", lambda b: nxt.set_sensitive(b.get_active()))
         return page
@@ -131,7 +137,7 @@ class WizardWindow(Adw.ApplicationWindow):
                                next_sensitive=False,
                                next_cb=lambda *_: self.nav.push(
                                    self._swap_page()),
-                               caption="Step 2 of 6")
+                               caption="Step 2 of 7")
         self._check_next = nxt
         spinner = Adw.ActionRow(title="Detecting system...")
         sp = Gtk.Spinner(spinning=True); spinner.add_prefix(sp)
@@ -186,7 +192,9 @@ class WizardWindow(Adw.ApplicationWindow):
         rec_b = ram + 2 * gb
         dbl_b = 2 * ram
         max_b = int(2.5 * ram)
+        max_custom_gb = max(max_b / gb, 256)
         self.swap_size_mb = int(rec_b / 2**20)
+        self._syncing_swap_widgets = False
 
         pref = Adw.PreferencesPage()
         group = Adw.PreferencesGroup(
@@ -223,15 +231,54 @@ class WizardWindow(Adw.ApplicationWindow):
             t += 4
         self._swap_scale = scale
 
-        def on_scale(sc):
-            v_gb = sc.get_value()
-            self.swap_size_mb = int(v_gb * 1024)
-            self._size_label.set_label(f"{v_gb:.0f} GB")
+        # ---- custom size text field / spin button
+        custom_adj = Gtk.Adjustment(lower=min_b / gb, upper=max_custom_gb,
+                                    value=rec_b / gb, step_increment=1,
+                                    page_increment=4)
+        custom_spin = Gtk.SpinButton(adjustment=custom_adj, climb_rate=1,
+                                     digits=1, numeric=True, hexpand=False)
+        custom_spin.set_width_chars(8)
+        custom_spin.set_tooltip_text("Custom swap size in GB")
+        self._custom_swap_spin = custom_spin
+
+        self._preset_rbs = []
+
+        def set_swap_gb(v_gb: float, *, update_scale: bool,
+                        update_spin: bool) -> None:
+            self.swap_size_mb = int(round(v_gb * 1024))
+            self._size_label.set_label(f"{v_gb:.1f} GB")
+            if update_scale:
+                scale_adj = self._swap_scale.get_adjustment()
+                if v_gb > scale_adj.get_upper():
+                    scale_adj.set_upper(v_gb)
+                self._swap_scale.set_value(v_gb)
+            if update_spin:
+                self._custom_swap_spin.set_value(v_gb)
             for rb, b in self._preset_rbs:
                 rb.handler_block(rb._h)
                 rb.set_active(abs(v_gb - b / gb) < 0.5)
                 rb.handler_unblock(rb._h)
+
+        def on_scale(sc):
+            if self._syncing_swap_widgets:
+                return
+            self._syncing_swap_widgets = True
+            try:
+                set_swap_gb(sc.get_value(), update_scale=False, update_spin=True)
+            finally:
+                self._syncing_swap_widgets = False
+
+        def on_custom_size(spin):
+            if self._syncing_swap_widgets:
+                return
+            self._syncing_swap_widgets = True
+            try:
+                set_swap_gb(spin.get_value(), update_scale=True, update_spin=False)
+            finally:
+                self._syncing_swap_widgets = False
+
         scale.connect("value-changed", on_scale)
+        custom_spin.connect("value-changed", on_custom_size)
 
         srow = Adw.PreferencesGroup()
         holder = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2,
@@ -242,7 +289,6 @@ class WizardWindow(Adw.ApplicationWindow):
         pref.add(srow)
 
         # ---- preset rows (quick select -> snap slider)
-        self._preset_rbs = []
         first = None
         presets = [
             (f"Minimum - {_bytes_gb(min_b)}", "Equal to RAM", min_b),
@@ -268,13 +314,28 @@ class WizardWindow(Adw.ApplicationWindow):
             group.add(row)
             self._preset_rbs.append((rb, b))
 
-        on_scale(scale)                  # initialize readout + selection
+        custom_group = Adw.PreferencesGroup(
+            title="Custom size",
+            description="Type an exact swap size in GB if the presets are not suitable.")
+        custom_row = Adw.ActionRow(
+            title="Custom swap size",
+            subtitle="Values below detected RAM are not allowed")
+        custom_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8,
+                             valign=Gtk.Align.CENTER)
+        custom_box.append(custom_spin)
+        custom_box.append(Gtk.Label(label="GB"))
+        custom_row.add_suffix(custom_box)
+        custom_row.set_activatable_widget(custom_spin)
+        custom_group.add(custom_row)
+        pref.add(custom_group)
+
+        set_swap_gb(rec_b / gb, update_scale=False, update_spin=True)
 
         page, _ = self._page("Swap File", pref,
                              next_cb=lambda *_: self.nav.push(
                                  self._plan_page()),
-                             caption="Step 3 of 6 - drag the slider or pick "
-                                     "a preset")
+                             caption="Step 3 of 7 - drag the slider, pick "
+                                     "a preset, or type a custom size")
         return page
 
     # ============================== Step 4: Plan review
@@ -292,27 +353,80 @@ class WizardWindow(Adw.ApplicationWindow):
         page, _ = self._page("Plan", pref, next_label="Apply Changes",
                              next_cb=lambda *_: self.nav.push(
                                  self._apply_page()),
-                             caption="Step 4 of 6 - you will be asked for "
+                             caption="Step 4 of 7 - you will be asked for "
                                      "your password once")
         return page
 
     # ============================== Step 5: Apply (threaded, progress)
     def _apply_page(self) -> Adw.NavigationPage:
+        self._apply_log_lines = []
+        self._apply_log_path = None
+
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14,
-                      margin_start=24, margin_end=24, margin_top=24)
+                      margin_start=24, margin_end=24, margin_top=24,
+                      margin_bottom=12)
         self._progress = Gtk.ProgressBar(show_text=True, text="Starting...")
-        self._log = Gtk.Label(label="", wrap=True, xalign=0)
-        self._log.add_css_class("monospace")
-        self._log.add_css_class("dim-label")
-        box.append(self._progress); box.append(self._log)
+
+        self._log_buffer = Gtk.TextBuffer()
+        self._log_view = Gtk.TextView(buffer=self._log_buffer,
+                                      editable=False, cursor_visible=False,
+                                      monospace=True, wrap_mode=Gtk.WrapMode.WORD_CHAR)
+        self._log_view.add_css_class("monospace")
+        log_scroll = Gtk.ScrolledWindow(child=self._log_view,
+                                        min_content_height=220,
+                                        vexpand=True, hexpand=True)
+        log_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        self._log_expander = Gtk.Expander(label="Live log", expanded=True)
+        self._log_expander.set_child(log_scroll)
+
+        self._log_saved_label = Gtk.Label(label="", xalign=0, wrap=True)
+        self._log_saved_label.add_css_class("dim-label")
+        self._log_saved_label.add_css_class("caption")
+
+        self._reboot_now_button = Gtk.Button(label="Reboot Now", halign=Gtk.Align.END)
+        self._reboot_now_button.add_css_class("destructive-action")
+        self._reboot_now_button.add_css_class("pill")
+        self._reboot_now_button.set_visible(False)
+        self._reboot_now_button.connect("clicked", self._on_reboot_now_clicked)
+
+        box.append(self._progress)
+        box.append(self._log_expander)
+        box.append(self._log_saved_label)
+        box.append(self._reboot_now_button)
 
         page, nxt = self._page("Applying Changes", box,
                                next_label="Working...",
                                next_sensitive=False,
-                               caption="Step 5 of 6")
+                               caption="Step 5 of 7")
         self._apply_next = nxt
+        self._append_apply_log("Starting hibernation configuration")
         threading.Thread(target=self._apply_worker, daemon=True).start()
         return page
+
+    def _append_apply_log(self, line: str) -> None:
+        stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"[{stamp}] {line or ''}"
+        self._apply_log_lines.append(entry)
+        if hasattr(self, "_log_buffer"):
+            end = self._log_buffer.get_end_iter()
+            self._log_buffer.insert(end, entry + "\n")
+            mark = self._log_buffer.create_mark(None,
+                                                self._log_buffer.get_end_iter(),
+                                                False)
+            self._log_view.scroll_mark_onscreen(mark)
+
+    def _save_apply_log(self) -> str:
+        downloads = Path.home() / "Downloads"
+        try:
+            downloads.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            downloads = Path.home()
+        stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        path = downloads / f"hibernation_wizard_{stamp}.log"
+        path.write_text("\n".join(self._apply_log_lines) + "\n",
+                        encoding="utf-8")
+        self._apply_log_path = str(path)
+        return self._apply_log_path
 
     def _apply_worker(self) -> None:
         def prog(pct, line):
@@ -327,23 +441,65 @@ class WizardWindow(Adw.ApplicationWindow):
         if pct is not None:
             self._progress.set_fraction(min(pct, 100) / 100)
         self._progress.set_text(line or "")
-        self._log.set_label(line or "")
+        if line:
+            self._append_apply_log(line)
         return False
 
     def _apply_finished(self, ok: bool, message: str) -> bool:
         if ok:
             self._progress.set_fraction(1.0)
             self._progress.set_text("Done - reboot required")
+            self._append_apply_log("Finished successfully - reboot required")
+            log_path = self._save_apply_log()
+            self._append_apply_log(f"Full log saved to {log_path}")
+            # Write again so the saved file also contains the saved-path line.
+            Path(log_path).write_text("\n".join(self._apply_log_lines) + "\n",
+                                     encoding="utf-8")
+            self._log_saved_label.set_label(f"Full log saved to: {log_path}")
+            self._reboot_now_button.set_visible(True)
             self._apply_next.set_label("Reboot Later")
             self._apply_next.connect(
                 "clicked",
                 lambda *_: self.nav.push(self._done_page(rebooted=False)))
         else:
             self._progress.set_text("Failed")
-            self._log.set_label(message)
+            self._append_apply_log(f"Failed: {message}")
+            log_path = self._save_apply_log()
+            self._append_apply_log(f"Full log saved to {log_path}")
+            Path(log_path).write_text("\n".join(self._apply_log_lines) + "\n",
+                                     encoding="utf-8")
+            self._log_saved_label.set_label(f"Full log saved to: {log_path}")
             self._apply_next.set_label("Back to Plan")
             self._apply_next.connect("clicked", lambda *_: self.nav.pop())
         self._apply_next.set_sensitive(True)
+        return False
+
+    def _on_reboot_now_clicked(self, *_args) -> None:
+        self._reboot_now_button.set_sensitive(False)
+        self._apply_next.set_sensitive(False)
+        self._append_apply_log("Reboot Now clicked")
+        self._progress.set_text("Requesting reboot...")
+        threading.Thread(target=self._reboot_now_worker, daemon=True).start()
+
+    def _reboot_now_worker(self) -> None:
+        try:
+            ok, message = self.controller.reboot_now()
+        except Exception as e:                              # noqa: BLE001
+            ok, message = False, str(e)
+        GLib.idle_add(self._reboot_now_done, ok, message)
+
+    def _reboot_now_done(self, ok: bool, message: str) -> bool:
+        if ok:
+            self._append_apply_log("Reboot command accepted")
+            self._progress.set_text("Reboot command accepted")
+        else:
+            self._append_apply_log(f"Reboot failed: {message}")
+            self._progress.set_text("Reboot failed")
+            self._reboot_now_button.set_sensitive(True)
+            self._apply_next.set_sensitive(True)
+        if self._apply_log_path:
+            Path(self._apply_log_path).write_text(
+                "\n".join(self._apply_log_lines) + "\n", encoding="utf-8")
         return False
 
     # ============================== Step 6: Verify
@@ -355,7 +511,7 @@ class WizardWindow(Adw.ApplicationWindow):
         pref.add(self._verify_group)
         page, nxt = self._page("Verify", pref, next_label="...",
                                next_sensitive=False,
-                               caption="Step 6 of 6")
+                               caption="Step 6 of 7")
         self._verify_next = nxt
         threading.Thread(target=self._verify_worker, daemon=True).start()
         return page
@@ -399,18 +555,49 @@ class WizardWindow(Adw.ApplicationWindow):
     # ============================== Done
     def _done_page(self, rebooted: bool) -> Adw.NavigationPage:
         if rebooted:
-            st = Adw.StatusPage(icon_name="emblem-ok-symbolic",
-                                title="Hibernation Is Configured",
-                                description="Test it from the power menu, "
-                                            "or with: systemctl hibernate")
+            title = "Hibernation Is Configured"
+            description = "Test it from the power menu, or with: systemctl hibernate"
+            icon = "emblem-ok-symbolic"
         else:
-            st = Adw.StatusPage(icon_name="view-refresh-symbolic",
-                                title="Reboot Required",
-                                description="Restart your computer, then "
-                                            "open Hibernate Wizard again to "
-                                            "verify the configuration.")
-        page, _ = self._page("Done", st, next_label="Close",
-                             next_cb=lambda *_: self.close())
+            title = "Reboot Required"
+            description = ("Restart your computer, then open Hibernate Wizard again "
+                           "to verify the configuration.")
+            icon = "view-refresh-symbolic"
+
+        st = Adw.StatusPage(icon_name=icon, title=title, description=description)
+        st.set_child(Gtk.Box())
+
+        group = Adw.PreferencesGroup(
+            title="Optional GNOME power-menu buttons",
+            description="After hibernation works, install one of these GNOME Shell "
+                        "extensions to expose Hibernate in the shell power menu.",
+            margin_start=24, margin_end=24)
+
+        row = Adw.ActionRow(
+            title="Hibernate Status Button",
+            subtitle="Adds Hibernate and Hybrid Sleep actions to the GNOME status menu")
+        link = Gtk.LinkButton.new_with_label(
+            HIBERNATE_STATUS_EXTENSION_URL, "Open Extension")
+        row.add_suffix(link)
+        row.set_activatable_widget(link)
+        group.add(row)
+
+        row2 = Adw.ActionRow(
+            title="System Action - Hibernate",
+            subtitle="Adds Hibernate among GNOME system actions")
+        link2 = Gtk.LinkButton.new_with_label(
+            SYSTEM_ACTION_HIBERNATE_EXTENSION_URL, "Open Extension")
+        row2.add_suffix(link2)
+        row2.set_activatable_widget(link2)
+        group.add(row2)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        box.append(st)
+        box.append(group)
+
+        page, _ = self._page("Next Steps", box, next_label="Close",
+                             next_cb=lambda *_: self.close(),
+                             caption="Step 7 of 7")
         return page
 
 

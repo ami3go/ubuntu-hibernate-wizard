@@ -34,7 +34,7 @@ ENV = {"LC_ALL": "C", "PATH": "/usr/sbin:/usr/bin:/sbin:/bin"}       # §20.8
 
 MUTATING = {"create-swap", "resize-swap", "update-fstab", "update-grub-resume",
             "update-initramfs-resume", "update-sleep-conf",
-            "update-polkit-rule", "rollback"}
+            "update-polkit-rule", "rollback", "reboot-system"}
 
 
 def run(argv: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
@@ -107,35 +107,121 @@ class Helper:
                                  or args["offset"] <= 0):
             raise ValueError("invalid offset")
 
-    # ------------- mutating subcommands (abbreviated set)
+    # ------------- mutating subcommands
+    def cmd_update_fstab(self, args: dict, emit) -> dict:
+        """Ensure /etc/fstab contains the requested swap file entry."""
+        path = "/etc/fstab"
+        swap = self._valid_swap_path(args["swap_file"])
+        wanted = f"{swap} none swap sw 0 0"
+        emit(5, f"reading {path}; desired active swap entry: {wanted}")
+        original = self._read(path)
+        new, changed = system.ensure_swap_entry(original, swap)
+        if not changed:
+            emit(100, f"{path} already contains an active entry for {swap}; no write needed")
+            return {"success": True, "changed": False}
+        self._atomic_write(path, new, backup=args["backup_dir"], emit=emit)
+        emit(100, f"appended to {path}: {wanted}")
+        return {"success": True, "changed": True}
+
     def cmd_update_grub_resume(self, args: dict, emit) -> dict:
         path = "/etc/default/grub"
+        emit(5, f"reading {path}")
+        emit(8, "will update only GRUB_CMDLINE_LINUX_DEFAULT; unrelated GRUB variables and comments are preserved")
+        emit(10, f"target kernel parameters: resume=UUID={args['uuid']} resume_offset={args['offset']}")
         original = self._read(path)
         new = grub_mod.set_resume_params(
             original, args["uuid"], args["offset"],
             remove_noresume=args.get("remove_noresume", False))
         if new == original:
+            emit(100, f"{path} already contains the requested resume parameters; update-grub skipped")
             return {"success": True, "changed": False}
-        self._atomic_write(path, new, backup=args["backup_dir"])
-        emit(50, "wrote /etc/default/grub, running update-grub")
+        self._atomic_write(path, new, backup=args["backup_dir"], emit=emit)
+        emit(50, "running command: update-grub")
         r = run(["update-grub"], timeout=180)
+        if r.stdout.strip():
+            emit(70, "update-grub stdout captured; first line: " + r.stdout.strip().splitlines()[0][:180])
         if r.returncode != 0:
+            if r.stderr.strip():
+                emit(100, "update-grub stderr: " + r.stderr.strip().splitlines()[0][:180])
             return {"success": False, "error_code": "UPDATE_GRUB_FAILED",
                     "message": "update-grub returned non-zero exit status",
                     "stdout": r.stdout, "stderr": r.stderr}
+        emit(100, "update-grub completed successfully")
         return {"success": True, "changed": True, "reboot_required": True,
                 "stdout": r.stdout}
 
     def cmd_update_initramfs_resume(self, args: dict, emit) -> dict:
         path = "/etc/initramfs-tools/conf.d/resume"
         content = f"RESUME=UUID={args['uuid']} resume_offset={args['offset']}\n"
-        self._atomic_write(path, content, backup=args["backup_dir"])
-        emit(30, "running update-initramfs -u -k all (this takes a while)")
+        emit(5, f"writing {path}")
+        emit(10, "new file content: " + content.strip())
+        original = self._read(path)
+        if original != content:
+            self._atomic_write(path, content, backup=args["backup_dir"], emit=emit)
+        else:
+            emit(15, f"{path} already contains the requested content; file write skipped")
+        emit(30, "running command: update-initramfs -u -k all")
         r = run(["update-initramfs", "-u", "-k", "all"], timeout=900)
+        if r.stdout.strip():
+            emit(70, "update-initramfs stdout captured; first line: " + r.stdout.strip().splitlines()[0][:180])
         if r.returncode != 0:
+            if r.stderr.strip():
+                emit(100, "update-initramfs stderr: " + r.stderr.strip().splitlines()[0][:180])
             return {"success": False, "error_code": "UPDATE_INITRAMFS_FAILED",
                     "message": "update-initramfs failed",
                     "stdout": r.stdout, "stderr": r.stderr}
+        emit(100, "update-initramfs completed successfully")
+        return {"success": True, "changed": original != content,
+                "reboot_required": True}
+
+    def cmd_update_sleep_conf(self, args: dict, emit) -> dict:
+        """Enable hibernation in a dedicated systemd sleep drop-in."""
+        path = "/etc/systemd/sleep.conf.d/99-ubuntu-hibernate-wizard.conf"
+        content = ("# Managed by Ubuntu Hibernate Wizard.\n"
+                   "# Remove this file or use the wizard rollback if needed.\n"
+                   "[Sleep]\n"
+                   "AllowHibernation=yes\n"
+                   "AllowHybridSleep=yes\n")
+        emit(5, f"preparing systemd sleep drop-in: {path}")
+        emit(10, "settings to enforce: AllowHibernation=yes, AllowHybridSleep=yes")
+        original = self._read(path)
+        if original == content:
+            emit(100, f"{path} already contains the wizard-managed settings; no write needed")
+            return {"success": True, "changed": False}
+        self._atomic_write(path, content, backup=args["backup_dir"], emit=emit)
+        emit(100, f"wrote {path}; systemd-logind reads this after reload/reboot")
+        return {"success": True, "changed": True, "reboot_required": True}
+
+    def cmd_update_polkit_rule(self, args: dict, emit) -> dict:
+        """Allow active local users to request logind hibernation actions."""
+        path = "/etc/polkit-1/rules.d/49-ubuntu-hibernate-wizard.rules"
+        actions = [
+            "org.freedesktop.login1.hibernate",
+            "org.freedesktop.login1.hibernate-multiple-sessions",
+            "org.freedesktop.login1.hibernate-ignore-inhibit",
+        ]
+        content = """// Managed by Ubuntu Hibernate Wizard.
+// Allows active local users to request hibernation through systemd-logind.
+polkit.addRule(function(action, subject) {
+    var hibernateActions = [
+        "org.freedesktop.login1.hibernate",
+        "org.freedesktop.login1.hibernate-multiple-sessions",
+        "org.freedesktop.login1.hibernate-ignore-inhibit"
+    ];
+    if (hibernateActions.indexOf(action.id) >= 0 && subject.local && subject.active) {
+        return polkit.Result.YES;
+    }
+});
+"""
+        emit(5, f"preparing polkit rule: {path}")
+        emit(10, "allowed logind actions: " + ", ".join(actions))
+        emit(15, "rule scope: subject.local && subject.active only; no wildcard command execution")
+        original = self._read(path)
+        if original == content:
+            emit(100, f"{path} already contains the wizard-managed rule; no write needed")
+            return {"success": True, "changed": False}
+        self._atomic_write(path, content, backup=args["backup_dir"], emit=emit)
+        emit(100, f"wrote {path}; polkit reloads rules automatically")
         return {"success": True, "changed": True, "reboot_required": True}
 
     def cmd_resize_swap(self, args: dict, emit) -> dict:
@@ -143,35 +229,68 @@ class Helper:
         target = self._valid_swap_path(args["swap_file"])
         side = target + ".new"
         size_mb = int(args["size_mb"])
-        j = system.ResizeJournal(target, side, size_mb * 1024 * 1024, "building")
+        size_bytes = size_mb * 1024 * 1024
+        emit(1, f"resize target: {target}; build-aside file: {side}; requested size: {size_mb} MiB")
+        emit(2, f"creating resize journal at {system.JOURNAL_PATH}; phase=building; size_bytes={size_bytes}")
+        j = system.ResizeJournal(target, side, size_bytes, "building")
         j.save()
-        emit(1, f"building {side} ({size_mb} MB) — existing swap stays active")
+        emit(3, f"running command: dd if=/dev/zero of={side} bs=1M count={size_mb} conv=fsync")
         r = run(["dd", "if=/dev/zero", f"of={side}", "bs=1M",
                  f"count={size_mb}", "conv=fsync"], timeout=7200)
         if r.returncode != 0:
-            os.unlink(side); system.ResizeJournal.clear()
+            try:
+                os.unlink(side)
+            except FileNotFoundError:
+                pass
+            system.ResizeJournal.clear()
+            if r.stderr.strip():
+                emit(100, "dd stderr: " + r.stderr.strip().splitlines()[0][:180])
             return {"success": False, "error_code": "DD_FAILED",
                     "stderr": r.stderr}
+        emit(55, f"setting secure permissions: chmod 0600 {side}")
         os.chmod(side, 0o600)
-        run(["mkswap", side])
-        # validate before touching old swap
+        emit(58, f"formatting swap signature: mkswap {side}")
+        r = run(["mkswap", side])
+        if r.returncode != 0:
+            os.unlink(side); system.ResizeJournal.clear()
+            return {"success": False, "error_code": "MKSWAP_FAILED",
+                    "stderr": r.stderr}
+        emit(62, f"validating new swap file without switching target: swapon {side}")
         if run(["swapon", side]).returncode != 0:
             os.unlink(side); system.ResizeJournal.clear()
             return {"success": False, "error_code": "NEW_SWAP_INVALID"}
+        emit(68, f"validation passed; disabling temporary validation swap: swapoff {side}")
         run(["swapoff", side])
         j.phase = "switching"; j.save()
-        emit(90, "switching over")
+        emit(75, "resize journal phase updated to switching")
+        emit(80, f"disabling old target if active: swapoff {target}")
         run(["swapoff", target])                     # ok if absent
+        emit(85, f"atomically replacing {target} with {side}")
         os.replace(side, target)                     # atomic, extents preserved
+        emit(90, f"activating final swap file: swapon {target}")
         if run(["swapon", target]).returncode != 0:
             return {"success": False, "error_code": "SWAPON_FAILED"}
         j.phase = "activated"; j.save()
+        emit(94, "resize journal phase updated to activated")
+        emit(96, f"measuring resume offset with: filefrag -v {target}")
         offset = parsers.parse_filefrag_offset(
             run(["filefrag", "-v", target]).stdout)  # final path (§20.9.3)
         system.ResizeJournal.clear()
-        emit(100, "swap replaced")
+        emit(100, f"swap replaced and active; final measured resume_offset={offset}")
         return {"success": True, "changed": True,
                 "data": {"new_offset": offset}}
+
+    def cmd_reboot_system(self, args: dict, emit) -> dict:
+        """Request an immediate reboot after the user pressed Reboot Now."""
+        emit(100, "running command: systemctl reboot")
+        r = run(["systemctl", "reboot"], timeout=10)
+        if r.returncode != 0:
+            return {"success": False, "error_code": "REBOOT_FAILED",
+                    "message": r.stderr.strip() or r.stdout.strip()
+                               or "systemctl reboot failed",
+                    "stdout": r.stdout, "stderr": r.stderr}
+        return {"success": True, "changed": True, "reboot_required": False,
+                "message": "reboot requested"}
 
     # ------------- utilities
     @staticmethod
@@ -188,15 +307,26 @@ class Helper:
             return ""
 
     @staticmethod
-    def _atomic_write(path: str, content: str, backup: str) -> None:
+    def _atomic_write(path: str, content: str, backup: str, emit=None) -> None:
         """§20.6 atomic edit with backup."""
         os.makedirs(backup, exist_ok=True)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         if os.path.exists(path):
-            shutil.copy2(path, os.path.join(backup, os.path.basename(path)))
+            backup_path = os.path.join(backup, os.path.basename(path))
+            shutil.copy2(path, backup_path)
+            if emit:
+                emit(20, f"backup created: {path} -> {backup_path}")
+        else:
+            if emit:
+                emit(20, f"{path} does not exist yet; creating new managed file")
         tmp = path + ".uhw-tmp"
+        if emit:
+            emit(25, f"writing temporary file: {tmp}")
         with open(tmp, "w") as f:
             f.write(content); f.flush(); os.fsync(f.fileno())
         os.chmod(tmp, 0o644)
+        if emit:
+            emit(35, f"atomic replace: {tmp} -> {path}")
         os.replace(tmp, path)
 
     # ------------- session loop

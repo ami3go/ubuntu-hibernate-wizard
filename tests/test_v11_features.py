@@ -2,6 +2,7 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 from ubuntu_hibernate_wizard.state import state_manager as sm
 from ubuntu_hibernate_wizard import cli
@@ -57,7 +58,7 @@ def test_cli_verify_emits_valid_json_and_documented_code():
     r = subprocess.run([sys.executable, "-m",
                         "ubuntu_hibernate_wizard.main", "--verify"],
                        capture_output=True, text=True,
-                       cwd="/home/claude/ubuntu-hibernate-wizard")
+                       cwd=Path(__file__).resolve().parents[1])
     assert r.returncode in (cli.EXIT_MISMATCH, cli.EXIT_CANNOT_CHECK)
     out = json.loads(r.stdout)                          # schema-valid JSON
     assert "errors" in out and out["schema_version"] == 1
