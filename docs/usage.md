@@ -19,16 +19,18 @@ The wizard verifies: Ubuntu version, ext4 root, GRUB, initramfs-tools, kernel hi
 - 🛑 Unsupported (Btrfs, no GRUB, VM without support) — the wizard stops safely and explains why.
 
 ### 3. Swap file
-Pick a size: **Recommended (RAM + 2 GB)** suits almost everyone. If you have zram only, a disk swap file is created alongside it; zram is kept.
+Pick a size: **Recommended (RAM + 2 GB)** suits almost everyone. You can also type an exact custom size in the **Custom swap size** field. If you have zram only, a disk swap file is created alongside it; zram is kept.
 
 ### 4. Review the plan
 Every command the wizard intends to run is listed. Nothing executes until you press **Apply Changes**. You'll be asked for your password **once** here.
 
 ### 5. Apply
-Watch live progress: swap creation (the longest step — writing 18 GB takes a few minutes), fstab, UUID and offset calculation, GRUB, initramfs, polkit. Every original file is backed up to `/var/backups/ubuntu-hibernate-wizard/<timestamp>/` first. If anything fails, the wizard stops and offers **Roll Back**.
+Watch the collapsible live log: swap creation (the longest step — writing 18 GB takes a few minutes), fstab, UUID and offset calculation, GRUB, initramfs, systemd sleep config, and polkit. Each line includes a timestamp and explains exactly what is manipulated: target paths, backup paths, commands such as `update-grub` and `update-initramfs -u -k all`, the calculated `resume=UUID=...`, the measured `resume_offset=...`, and whether each file was changed or already correct. Every original file is backed up to `/var/backups/ubuntu-hibernate-wizard/<timestamp>/` first. When this step finishes, the full log is saved to `~/Downloads/hibernation_wizard_<timestamp>.log`.
+
+After a successful apply you can choose **Reboot Now** or **Reboot Later**.
 
 ### 6. Reboot
-Required — the kernel must load the new resume parameters.
+Required — the kernel must load the new resume parameters. Use **Reboot Now** to restart immediately or **Reboot Later** if you want to close your work first.
 
 ### 7. Verify (after reboot)
 Open the wizard again. It compares what the kernel is actually using against reality:
@@ -46,7 +48,8 @@ A ❌ on offset is the classic stale-offset bug — press **Repair and Reboot** 
 Press **Test Hibernation**. The machine writes a marker, hibernates (screen off, power off), and when you power it back on your session should resume exactly where it was. The wizard confirms the test on resume.
 
 ### 9. Optional extras
-- Add a **Hibernate button** to the GNOME power menu (extension).
+- The final **Next Steps** page links to **Hibernate Status Button**, which adds Hibernate and Hybrid Sleep actions to the GNOME status menu.
+- It also links to **System Action - Hibernate**, which adds Hibernate among GNOME system actions.
 - Enable the **boot-time guard** so you're notified if a kernel update ever breaks the configuration.
 
 ## Command line (v1.2+)

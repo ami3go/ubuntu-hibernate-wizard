@@ -1,4 +1,6 @@
 site_name: Hibernate Wizard for Ubuntu
+site_description: Enable, verify, and repair Ubuntu hibernation with swap file, GRUB resume_offset, initramfs, systemd, and GNOME Hibernate button guidance.
+site_author: ami3go
 site_url: https://ami3go.github.io/ubuntu-hibernate-wizard/
 repo_url: https://github.com/ami3go/ubuntu-hibernate-wizard
 repo_name: ami3go/ubuntu-hibernate-wizard

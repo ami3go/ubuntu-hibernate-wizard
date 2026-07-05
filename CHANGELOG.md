@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+- Documentation: SEO-optimized README and GitHub Pages home page for Ubuntu hibernation search terms.
+
+## [0.3.5] - 2026-07-05
+- Add **System Action - Hibernate** as a second GNOME Shell extension option on the final Next Steps page.
+- Make Step 5 apply logs more verbose: record exact files, commands, backup paths, selected swap size, UUID, resume offset, policy changes, and changed/already-correct results.
+- Implement and log the fstab, systemd sleep drop-in, and polkit rule helper steps that were already listed in the plan.
+
+## [0.3.4] - 2026-07-05
+- Add custom swap-size text field on the swap step.
+- Replace the single-line apply status with a collapsible timestamped live log.
+- Save the full apply log to `~/Downloads/hibernation_wizard_<timestamp>.log` when the apply step finishes.
+- Add **Reboot Now** and **Reboot Later** choices after successful apply.
+- Add a final next-steps page linking to the GNOME Hibernate Status Button extension.
+
 ## [0.3.3] - 2026-07-05
 - Add GitHub Pages publishing workflow using current Pages actions.
 - Add MkDocs site metadata and GitHub Pages deployment documentation.

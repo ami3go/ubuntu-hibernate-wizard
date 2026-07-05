@@ -1,3 +1,19 @@
+ubuntu-hibernate-wizard (0.3.5-1) noble; urgency=medium
+
+  * Add System Action - Hibernate as a second GNOME extension link.
+  * Expand Step 5 logs with exact changed files, commands, backup paths,
+    resume UUID/offset values, and changed/already-correct outcomes.
+  * Implement fstab, systemd sleep drop-in, and polkit rule helper steps.
+
+ -- Ubuntu Hibernate Wizard <maintainer@example.com>  Sun, 05 Jul 2026 20:15:00 +0300
+
+ubuntu-hibernate-wizard (0.3.4-1) noble; urgency=medium
+
+  * Add custom swap-size entry, timestamped apply log, saved logs, reboot actions,
+    and GNOME Hibernate Status Button extension link.
+
+ -- Ubuntu Hibernate Wizard <maintainer@example.com>  Sun, 05 Jul 2026 19:30:00 +0300
+
 ubuntu-hibernate-wizard (0.2.0-1) noble; urgency=medium
 
   * Spec v1.8: CLI verify mode (--verify --json, exit codes 0/2/3).
