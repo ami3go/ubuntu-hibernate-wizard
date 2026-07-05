@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.3] - 2026-07-05
+- Add GitHub Pages publishing workflow using current Pages actions.
+- Add MkDocs site metadata and GitHub Pages deployment documentation.
+
 ## [0.3.2] - 2026-07-05
 - Fix overlapping Minimum/Recommended slider labels: Recommended now sits
   above the track; wider GNOME-Disks-style slider with 4 GB ticks

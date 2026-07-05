@@ -57,6 +57,25 @@ make deb    # build the .deb package into dist/
 
 Dependencies for running: `python3 (>= 3.11)`, `python3-gi`, `gir1.2-gtk-4.0`, `gir1.2-adw-1`, `pkexec`, `polkitd`.
 
+
+## GitHub Pages documentation
+
+This repository includes a GitHub Actions workflow that publishes the MkDocs documentation site to GitHub Pages.
+
+One-time setup on GitHub:
+
+1. Open **Settings → Pages** for the repository.
+2. Set **Build and deployment → Source** to **GitHub Actions**.
+3. Run the **Docs** workflow, or push to `main`.
+
+Expected URL for this repository:
+
+```text
+https://ami3go.github.io/ubuntu-hibernate-wizard/
+```
+
+More details are in [GitHub Pages Deployment](docs/github-pages.md).
+
 ## Documentation
 
 - [Usage guide](docs/usage.md) — step-by-step walkthrough

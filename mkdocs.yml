@@ -1,4 +1,8 @@
 site_name: Hibernate Wizard for Ubuntu
+site_url: https://ami3go.github.io/ubuntu-hibernate-wizard/
+repo_url: https://github.com/ami3go/ubuntu-hibernate-wizard
+repo_name: ami3go/ubuntu-hibernate-wizard
+edit_uri: edit/main/docs/
 theme:
   name: material
   palette:
@@ -16,4 +20,5 @@ nav:
   - Rollback & Recovery: rollback-and-recovery.md
   - Architecture: architecture.md
   - Testing: testing.md
+  - GitHub Pages: github-pages.md
   - FAQ: faq.md
