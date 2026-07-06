@@ -1,66 +1,89 @@
-ubuntu-hibernate-wizard (0.3.5-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.4.3~rc1-1) unstable; urgency=medium
 
-  * Add System Action - Hibernate as a second GNOME extension link.
-  * Expand Step 5 logs with exact changed files, commands, backup paths,
-    resume UUID/offset values, and changed/already-correct outcomes.
-  * Implement fstab, systemd sleep drop-in, and polkit rule helper steps.
+  * Fix the left sidebar Review & Apply step appearing without visible text
+    by replacing ActionRow title-dependent navigation with explicit GTK labels.
+  * Add stable sidebar row and label object names for future GUI smoke tests.
 
- -- Ubuntu Hibernate Wizard <maintainer@example.com>  Sun, 05 Jul 2026 20:15:00 +0300
+ -- Ubuntu Hibernate Wizard Maintainers <maintainers@example.invalid>  Mon, 06 Jul 2026 18:35:00 +0300
 
-ubuntu-hibernate-wizard (0.3.4-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.42.12-1) unstable; urgency=medium
 
-  * Add custom swap-size entry, timestamped apply log, saved logs, reboot actions,
-    and GNOME Hibernate Status Button extension link.
+  * Move the Recommended swap-size slider mark above the slider to avoid
+    overlap with the Minimum mark on systems where RAM and RAM+2 GiB are close.
+  * Keep Minimum and 2x RAM marks below the slider for clearer visual spacing.
 
- -- Ubuntu Hibernate Wizard <maintainer@example.com>  Sun, 05 Jul 2026 19:30:00 +0300
+ -- Ubuntu Hibernate Wizard Maintainers <maintainers@example.invalid>  Mon, 06 Jul 2026 18:15:00 +0300
 
-ubuntu-hibernate-wizard (0.2.0-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.42.11-1) unstable; urgency=medium
 
-  * Spec v1.8: CLI verify mode (--verify --json, exit codes 0/2/3).
-  * Boot-time guard service+timer and session notify watcher (shipped inert).
-  * State schema v1 with swap_preexisting provenance.
-  * Extended purge rules per SS17.3.
+  * Add RAM-based marks to the managed swap-size slider: Minimum, Recommended, and 2x RAM.
+  * Update swap-size preset buttons to match the slider guidance.
+  * Keep manual GiB input and hardened helper-side managed swap-file preparation.
 
- -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 12:00:00 +0000
+ -- Ubuntu Hibernate Wizard Maintainers <noreply@example.com>  Mon, 06 Jul 2026 18:20:00 +0300
 
-ubuntu-hibernate-wizard (0.1.0-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.42.9-1) unstable; urgency=medium
 
-  * Initial release.
+  * Fix System Check summary refresh so it updates the existing status line instead of appending duplicate summary rows.
+  * Allow active ext4 swap-file systems with existing matching kernel/initramfs resume_offset when unprivileged filefrag is denied; the privileged helper still revalidates before real apply.
+  * Preserve probe warnings when encrypted-swap classification metadata is merged.
 
- -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 10:00:00 +0000
+ -- Ubuntu Hibernate Wizard Project <maintainers@ubuntu-hibernate-wizard.local>  Mon, 06 Jul 2026 18:10:00 +0300
 
-ubuntu-hibernate-wizard (0.2.1-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.42.8-1) unstable; urgency=medium
 
-  * Fix uninstallable dependency: policykit-1 is transitional/removed on
-    modern Ubuntu; depend on pkexec + polkitd instead.
+  * Add production/public-use hardening fixtures with golden expected outputs.
+  * Add conservative encrypted swap and unknown mapper swap detection/blocking.
+  * Change diagnostic export to a structured redacted ZIP bundle.
+  * Add GTK smoke-test workflow, static safety tests, and stable GUI object names.
+  * Complete the 8-step runtime diagram and document read/write touchpoints.
 
- -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 13:00:00 +0000
+ -- Ubuntu Hibernate Wizard Project <maintainers@ubuntu-hibernate-wizard.local>  Mon, 06 Jul 2026 15:30:00 +0200
 
-ubuntu-hibernate-wizard (0.3.0-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.42.5-1) unstable; urgency=medium
 
-  * GUI: Back and Next buttons on every wizard page (System Check is no
-    longer a dead end).
-  * GUI: full flow wired end-to-end: Swap size -> Plan -> Apply with live
-    progress -> Reboot -> Verify -> Repair.
-  * Welcome page gains "Verify existing configuration" shortcut for the
-    post-reboot flow.
-  * Detection runs in a background thread with a spinner; failures show an
-    error row and Back still works.
+  * Code cleanup and helper hardening update.
+  * Remove stale duplicate helper tree from source package.
+  * Make GRUB fragment generation idempotent to avoid duplicate resume tokens.
+  * Strengthen one-shot helper request validation.
 
- -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 14:00:00 +0000
+ -- Ubuntu Hibernate Wizard Project <maintainers@ubuntu-hibernate-wizard.local>  Mon, 06 Jul 2026 13:00:00 +0200
 
-ubuntu-hibernate-wizard (0.3.1-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.42.4-1) unstable; urgency=medium
 
-  * Swap page: detected RAM shown; size slider with marks mapped at
-    Minimum (=RAM), Recommended (RAM+2GB) and Double RAM; presets snap
-    the slider; slider allows any custom size up to 2.5x RAM.
+  * Add Gate F release-candidate evidence tooling.
+  * Add CLI support for manual hibernate/resume records and Gate F manifests.
+  * Document Gate F workflow after Gate E disposable-VM apply.
 
- -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 15:00:00 +0000
+ -- Ubuntu Hibernate Wizard Maintainers <maintainers@example.invalid>  Mon, 06 Jul 2026 11:20:00 +0000
 
-ubuntu-hibernate-wizard (0.3.2-1) noble; urgency=medium
+ubuntu-hibernate-wizard (0.42.3-1) unstable; urgency=medium
 
-  * Swap slider: Recommended mark moved above the track so labels can no
-    longer overlap; single-line mark labels; wider GNOME-Disks-style track
-    with unlabeled 4 GB ticks.
+  * Harden GTK layout to avoid overlap/clipping in wizard pages.
+  * Use wrapping custom rows for long technical values and extension links.
 
- -- Ubuntu Hibernate Wizard Project <example@example.org>  Sun, 05 Jul 2026 16:00:00 +0000
+ -- Ubuntu Hibernate Wizard Maintainers <maintainers@example.invalid>  Mon, 06 Jul 2026 10:55:00 +0000
+
+ubuntu-hibernate-wizard (0.42.2-1) unstable; urgency=medium
+
+  * Add Gate E disposable-VM validation harness and guarded real-apply CLI.
+
+ -- Ubuntu Hibernate Wizard Project <maintainers@ubuntu-hibernate-wizard.local>  Mon, 06 Jul 2026 12:00:00 +0000
+
+ubuntu-hibernate-wizard (0.42.1-1) unstable; urgency=medium
+
+  * GTK4 hardening update: unprivileged detection, bundled SVG icons, diagrams.
+  * Strengthen one-shot helper validation and swap edge-case classification.
+  * Add diagnostic export and hardening tests.
+
+ -- Ubuntu Hibernate Wizard Maintainers <noreply@example.invalid>  Mon, 06 Jul 2026 10:30:00 +0000
+
+ubuntu-hibernate-wizard (0.42.0-1) unstable; urgency=medium
+
+  * Implement GTK4/libadwaita v0.42 task scope.
+  * Support existing active swap partition/file targets only.
+  * Add dry-run and fake-system test modes.
+  * Use managed resume and GRUB fragment files only.
+  * Remove swap create/resize/fstab/policy mutation from apply path.
+
+ -- Ubuntu Hibernate Wizard Project <maintainers@ubuntu-hibernate-wizard.local>  Mon, 06 Jul 2026 12:00:00 +0200

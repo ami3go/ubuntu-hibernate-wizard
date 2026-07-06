@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/github/ami3go/UbuntuHibernateWizard">
+    <file alias="ui/main_window.ui">main_window.ui</file>
+    <file alias="css/app.css">../css/app.css</file>
+    <file alias="icons/about.svg">../assets/icons/about.svg</file>
+    <file alias="icons/app-icon.svg">../assets/icons/app-icon.svg</file>
+    <file alias="icons/app-icon.png">../assets/icons/app-icon.png</file>
+    <file alias="banner.png">../assets/banner.png</file>
+    <file alias="icons/apply-phase.svg">../assets/icons/apply-phase.svg</file>
+    <file alias="icons/arrow-right.svg">../assets/icons/arrow-right.svg</file>
+    <file alias="icons/boot-gears.svg">../assets/icons/boot-gears.svg</file>
+    <file alias="icons/bootloader-terminal.svg">../assets/icons/bootloader-terminal.svg</file>
+    <file alias="icons/config-file.svg">../assets/icons/config-file.svg</file>
+    <file alias="icons/configuration.svg">../assets/icons/configuration.svg</file>
+    <file alias="icons/desktop-return.svg">../assets/icons/desktop-return.svg</file>
+    <file alias="icons/disk.svg">../assets/icons/disk.svg</file>
+    <file alias="icons/error.svg">../assets/icons/error.svg</file>
+    <file alias="icons/finish.svg">../assets/icons/finish.svg</file>
+    <file alias="icons/help.svg">../assets/icons/help.svg</file>
+    <file alias="icons/hibernate-power.svg">../assets/icons/hibernate-power.svg</file>
+    <file alias="icons/info-note.svg">../assets/icons/info-note.svg</file>
+    <file alias="icons/initramfs-box.svg">../assets/icons/initramfs-box.svg</file>
+    <file alias="icons/kernel-restore-ram.svg">../assets/icons/kernel-restore-ram.svg</file>
+    <file alias="icons/next.svg">../assets/icons/next.svg</file>
+    <file alias="icons/planned-modifications.svg">../assets/icons/planned-modifications.svg</file>
+    <file alias="icons/power-off.svg">../assets/icons/power-off.svg</file>
+    <file alias="icons/ram-save.svg">../assets/icons/ram-save.svg</file>
+    <file alias="icons/reboot-text.svg">../assets/icons/reboot-text.svg</file>
+    <file alias="icons/review-apply.svg">../assets/icons/review-apply.svg</file>
+    <file alias="icons/rollback-snapshot.svg">../assets/icons/rollback-snapshot.svg</file>
+    <file alias="icons/runtime-cycle.svg">../assets/icons/runtime-cycle.svg</file>
+    <file alias="icons/services-stop.svg">../assets/icons/services-stop.svg</file>
+    <file alias="icons/status-pending.svg">../assets/icons/status-pending.svg</file>
+    <file alias="icons/success-check.svg">../assets/icons/success-check.svg</file>
+    <file alias="icons/swap-target-search.svg">../assets/icons/swap-target-search.svg</file>
+    <file alias="icons/swap-target.svg">../assets/icons/swap-target.svg</file>
+    <file alias="icons/system-check.svg">../assets/icons/system-check.svg</file>
+    <file alias="icons/warning.svg">../assets/icons/warning.svg</file>
+  </gresource>
+</gresources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="desktop return icon">
+<title>Desktop Return</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<rect x="11" y="15" width="42" height="30" rx="4" fill="#6E35B4" stroke="#2B2F38" stroke-width="3"/>
+<path d="M20 33c5-10 17-14 26-7" fill="none" stroke="#F39C12" stroke-width="4" stroke-linecap="round"/>
+<path d="M28 22a8 8 0 1 0 8 13" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+<path d="M25 50h14M32 45v5" stroke="#2B2F38" stroke-width="3" stroke-linecap="round"/>
+
+</svg>

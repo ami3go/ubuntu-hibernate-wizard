@@ -1,178 +1,172 @@
+# Ubuntu Hibernate Wizard
+
 <p align="center">
-  <img src="data/banner.svg" alt="Ubuntu Hibernate Wizard - enable hibernation on Ubuntu with swap file, GRUB resume and GNOME power menu support" width="100%">
+  <img src="docs/assets/banner.png" alt="Ubuntu Hibernate Wizard banner" width="900">
 </p>
 
-# Ubuntu Hibernate Wizard – Enable Hibernation on Ubuntu with Swap File, GRUB Resume & GNOME Hibernate Button
+<p align="center">
+  <strong>Safety-first GTK4/libadwaita wizard for enabling hibernation on Ubuntu with an existing persistent swap target.</strong>
+</p>
 
-**Ubuntu Hibernate Wizard** is a safe GTK4/libadwaita desktop app for people who want to **enable hibernation on Ubuntu** without manually editing GRUB, initramfs, swap-file settings, or GNOME power-menu extensions.
+<p align="center">
+  <a href="https://ami3go.github.io/ubuntu-hibernate-wizard/">Documentation</a> ·
+  <a href="https://ami3go.github.io/ubuntu-hibernate-wizard/installation/">Installation</a> ·
+  <a href="https://ami3go.github.io/ubuntu-hibernate-wizard/usage/">Usage</a> ·
+  <a href="https://ami3go.github.io/ubuntu-hibernate-wizard/troubleshooting/">Troubleshooting</a>
+</p>
 
-It helps with common Ubuntu hibernation problems such as:
+> **Current status:** v0.42.12 is a developer/test release with restored managed /swap.img sizing controls. Gate D has passed, Gate E/F tooling exists, but real disposable-VM hibernate/resume validation is still required before public real-apply release.
 
-- **Ubuntu hibernate not working** after creating or resizing a swap file
-- `systemctl hibernate` shuts down but does not resume the session
-- missing or stale `resume=UUID=...` and `resume_offset=...` kernel parameters
-- GRUB/initramfs configuration mistakes
-- no Hibernate button in the GNOME power menu
-- uncertainty about swap-file size, swap offset, and post-reboot verification
+![Ubuntu Hibernate Wizard GTK4 menu screenshots](docs/assets/screenshots/menu/00_contact_sheet_all_menu_steps.png)
 
-The wizard checks your system, creates or resizes the swap file, configures resume parameters, updates initramfs, verifies hibernation support, saves a detailed log, and links to GNOME extensions that add Hibernate actions to the desktop power menu.
+## Why this exists
 
-## Quick install on Ubuntu
+Ubuntu can hibernate, but a working setup often needs several exact pieces to match:
 
-Download the `.deb` package from the latest GitHub release, then install it with:
+- a persistent swap partition or swap file large enough for RAM;
+- a stable resume UUID;
+- a correct swap-file `resume_offset` when the target is a file;
+- initramfs resume configuration;
+- GRUB kernel parameters;
+- safe rollback when boot configuration changes.
+
+Ubuntu Hibernate Wizard turns that process into a reviewable wizard. It detects the current system state, classifies hibernation targets, shows the exact planned changes, and applies only a small allowlisted set of configuration updates through a polkit helper.
+
+## Supported in v0.42
+
+| Area | Supported |
+|---|---|
+| Desktop | Ubuntu/GNOME style desktop using GTK4 + libadwaita |
+| Boot stack | GRUB + initramfs-tools |
+| Swap partition | Existing active persistent swap partition with stable UUID and size >= RAM |
+| Swap file | Existing active ext4 swap file with reliable `filefrag` offset, or btrfs swap file when `btrfs inspect-internal map-swapfile -r` succeeds |
+| zram | Detected and blocked as a hibernation target |
+| Secure Boot | Detected and warned; not changed |
+| Apply path | Managed resume file + managed GRUB fragment only |
+| Reboot | Manual text notice only; no reboot button |
+
+Postponed or unsupported in v0.42: swap creation, swap resizing, inactive swap enabling, `/etc/fstab` swap management, partition formatting, repartitioning, systemd-boot, dracut, UKI, random-key encrypted swap, unknown mapper swap, automatic encrypted-hibernation setup, removable-media swap, and automatic reboot.
+
+## Managed files
+
+Real Apply may write only these files:
+
+```text
+/etc/initramfs-tools/conf.d/resume
+/etc/default/grub.d/hibernate-wizard.cfg
+```
+
+The wizard must not blindly rewrite `/etc/default/grub`, must not remove user-created GRUB options, and must not edit arbitrary bootloader files. Existing conflicting `resume=`, `resume_offset=`, or `RESUME=` configuration blocks Apply until reviewed.
+
+## Safety model
+
+The GUI is not run as root. Real changes use a narrow helper:
+
+```text
+pkexec /usr/libexec/ubuntu-hibernate-wizard/ubuntu-hibernate-wizard-helper --action apply-plan --stdin-json
+```
+
+The helper validates the request schema, re-probes and reclassifies the live system, rejects unknown fields and duplicate steps/files, uses fixed command arrays, and never executes arbitrary shell strings.
+
+## Install
+
+From a release `.deb`:
 
 ```bash
 sudo apt install ./ubuntu-hibernate-wizard_*.deb
 ```
 
-Launch **Hibernate Wizard** from the Ubuntu app grid.
+Required runtime packages:
 
-You can also run verification from the terminal:
+```text
+python3 (>= 3.11), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1,
+pkexec, polkitd, initramfs-tools, grub-common, util-linux, e2fsprogs
+```
+
+## Run safely from source
 
 ```bash
-ubuntu-hibernate-wizard --verify --json
+git clone https://github.com/ami3go/ubuntu-hibernate-wizard.git
+cd ubuntu-hibernate-wizard
+PYTHONPATH=. python3 -m ubuntu_hibernate_wizard.main --dry-run
 ```
 
-## What problem does this app solve?
+Use a fake system profile without probing or changing the host:
 
-Ubuntu can hibernate, but enabling it with a swap **file** is easy to break. The kernel needs two correct values at boot:
-
-```text
-resume=UUID=d76e67b3-... resume_offset=5986304
+```bash
+PYTHONPATH=. python3 -m ubuntu_hibernate_wizard.main \
+  --dry-run \
+  --fake-system tests/fixtures/fake_systems/swapfile_ok
 ```
 
-If the UUID or physical swap-file offset is wrong, Ubuntu may appear to hibernate but then cold-boot instead of restoring your session. This often happens after a swap file is recreated, resized, moved by the filesystem, or after boot configuration changes.
+Run tests and build a Debian package:
 
-Ubuntu Hibernate Wizard automates the full workflow:
-
-1. detects the current Ubuntu, filesystem, swap, GRUB, initramfs, and Secure Boot state;
-2. creates or resizes the swap file, including a custom swap size field;
-3. calculates the correct filesystem UUID and swap-file physical offset;
-4. writes a reviewed plan before any privileged change is made;
-5. updates `/etc/fstab`, GRUB resume parameters, systemd sleep configuration, and polkit rules when needed;
-6. rebuilds initramfs;
-7. saves a timestamped log to `~/Downloads/hibernation_wizard_<timestamp>.log`;
-8. offers **Reboot Now** and **Reboot Later** actions;
-9. guides you to GNOME extensions for adding Hibernate to the power menu.
-
-## Main features
-
-- **Guided Ubuntu hibernation setup** — step-by-step wizard for swap file, GRUB, initramfs, systemd, and GNOME follow-up
-- **Custom swap size** — choose a preset or enter your own swap-file size in GB
-- **Safe swap-file creation and resize** — build-aside approach with backups and recovery journal
-- **Fix stale `resume_offset`** — recalculates the swap-file offset instead of reusing old values
-- **Verbose live apply log** — collapsible Step 5 log with timestamps, commands, file paths, backup paths, kernel parameters, and exact changes
-- **Saved log file** — writes the full log to your Downloads folder for debugging or bug reports
-- **One password prompt per run** — uses one pkexec-elevated helper session, not repeated sudo prompts
-- **Post-reboot verification** — checks if hibernation configuration still matches the current swap file
-- **One-click repair flow** — detects UUID/offset drift and suggests repair
-- **Full rollback model** — every modified file is backed up before mutation
-- **GNOME Hibernate button guidance** — links to Hibernate Status Button and System Action - Hibernate extensions
-- **CLI verification mode** — useful for scripts, monitoring, or support diagnostics
-
-## Who is it for?
-
-This app is useful if you searched for:
-
-- “enable hibernation Ubuntu”
-- “Ubuntu hibernate not working”
-- “Ubuntu 24.04 hibernate swap file”
-- “Ubuntu resume_offset swap file”
-- “systemctl hibernate does not resume”
-- “add Hibernate button GNOME power menu”
-- “GRUB resume UUID resume_offset Ubuntu”
-- “Ubuntu laptop hibernate instead of suspend”
-
-It is designed for Ubuntu desktop users who want a safer alternative to copying terminal commands from random forum posts.
-
-## Supported systems
-
-| Requirement | Supported now |
-|---|---|
-| Ubuntu release | Ubuntu 24.04 LTS, Ubuntu 26.04 LTS; interim releases show a warning |
-| Desktop | GNOME with GTK4/libadwaita |
-| Bootloader | GRUB |
-| Initramfs | initramfs-tools |
-| Swap type | swap **file** |
-| Root filesystem | ext4 |
-| Secure Boot | detected; advanced confirmation required |
-
-Planned or experimental areas are tracked in the documentation and issue tracker. Btrfs, LUKS-encrypted swap, swap partitions, and systemd-boot need different handling and are not the default supported path yet.
-
-## Screenshots / GitHub Pages documentation
-
-Project documentation is published with GitHub Pages:
-
-```text
-https://ami3go.github.io/ubuntu-hibernate-wizard/
+```bash
+make test
+make deb
 ```
 
-Useful documentation pages:
 
-- [Installation guide](docs/installation.md)
-- [Usage guide](docs/usage.md)
-- [How Ubuntu hibernation works](docs/how-hibernation-works.md)
-- [Troubleshooting Ubuntu hibernation](docs/troubleshooting.md)
+## Public-use hardening in v0.42.8
+
+This package includes the production-readiness correction set:
+
+- fake-system fixtures with golden expected outputs;
+- conservative encrypted-swap detection using crypttab, mapper, lsblk, and dmsetup evidence;
+- Diagnostic ZIP export with redaction;
+- GTK smoke tests for Ubuntu CI;
+- static safety checks against direct protected-file writes;
+- complete 8-step runtime documentation.
+
+Diagnostic exports are ZIP files named `ubuntu-hibernate-wizard-diagnostics-YYYYMMDD-HHMMSS.zip`. See `docs/diagnostics.md` for included files and privacy redaction rules.
+
+## Typical workflow
+
+1. Launch **Ubuntu Hibernate Wizard**.
+2. Run **System Check**.
+3. Select an existing valid swap partition or swap file.
+4. Review **Planned Modifications**.
+5. Run dry-run first.
+6. Apply only after reviewing the plan.
+7. Reboot manually from the desktop/system menu.
+8. Verify resume configuration after reboot.
+
+## Useful commands
+
+```bash
+ubuntu-hibernate-wizard --verify
+ubuntu-hibernate-wizard --gate-e-preflight
+ubuntu-hibernate-wizard --gate-e-dry-run
+```
+
+Gate E/F release validation commands are documented in:
+
+- [Gate E disposable VM validation](docs/gate-e-vm-validation.md)
+- [Gate F release-candidate evidence check](docs/gate-f-release-candidate.md)
+
+## Documentation
+
+The GitHub Pages site is built with MkDocs:
+
+- [Installation](docs/installation.md)
+- [Usage](docs/usage.md)
+- [Screenshots and examples](docs/screenshots-and-examples.md)
+- [How hibernation works](docs/how-hibernation-works.md)
+- [Troubleshooting](docs/troubleshooting.md)
 - [Rollback and recovery](docs/rollback-and-recovery.md)
 - [Architecture and safety model](docs/architecture.md)
-- [FAQ](docs/faq.md)
+- [GitHub Pages deployment notes](docs/github-pages.md)
 
-## GNOME extensions for Hibernate button
+## License and assets
 
-Ubuntu Hibernate Wizard configures the operating system side of hibernation. For a convenient desktop menu entry, the final page links to these GNOME Shell extensions:
+Code is licensed under **GPL-3.0-or-later**.
 
-- [Hibernate Status Button](https://extensions.gnome.org/extension/755/hibernate-status-button/) — adds Hibernate and Hybrid Sleep actions to the GNOME status menu
-- [System Action - Hibernate](https://extensions.gnome.org/extension/3814/system-action-hibernate/) — adds Hibernate as a GNOME system action
+Bundled icon assets are original geometric drawings made for this project. They intentionally avoid Ubuntu logo marks, Tux, GNOME symbolic icons, FontAwesome, Material Icons, and other license-limited symbol sets.
 
-## Build from source
 
-```bash
-make test   # run unit tests without root and without system changes
-make deb    # build the .deb package into dist/
-```
+## v0.42.12 managed swap-file sizing
 
-Runtime dependencies:
+The Configuration step includes a RAM-based slider with marks for Minimum, Recommended, and 2× RAM, plus preset buttons and manual GiB input.
 
-```text
-python3 (>= 3.11), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, pkexec, polkitd
-```
 
-## Safety model
-
-The GUI never runs privileged shell commands directly. A separate root helper is launched once per run via `pkexec`. The helper accepts only a fixed set of validated operations and refuses mutations that are not part of the reviewed plan shown in the wizard.
-
-Before changing the system, the app records what will be changed and where backups will be stored. Every changed file is backed up first. Package installation itself does not enable hibernation or modify boot configuration; changes happen only after the user reviews and applies the plan.
-
-## FAQ: Ubuntu hibernation search questions
-
-### How do I enable hibernation on Ubuntu with a swap file?
-
-Use the wizard to check compatibility, choose or create a swap file, calculate the correct `resume=UUID=...` and `resume_offset=...`, update GRUB/initramfs, reboot, and run verification. The app is designed to avoid the common mistake of using an outdated swap-file offset.
-
-### Why does Ubuntu hibernate but not resume?
-
-The most common reason is that the kernel boot parameters no longer match the real swap file. A stale UUID or stale `resume_offset` can make Ubuntu boot normally instead of restoring the hibernated image. The wizard recalculates and verifies both values.
-
-### Why is `resume_offset` important for Ubuntu swap-file hibernation?
-
-For swap-file hibernation, the kernel must know the physical disk offset of the swap file. This is different from swap partitions, where the block device itself is used. If the file is recreated or moved, the offset can change.
-
-### Does this add a Hibernate button to the GNOME power menu?
-
-The app links to GNOME extensions that can add Hibernate actions to the power menu. The wizard focuses on safe system configuration and verification; the extensions provide the convenient desktop button.
-
-### Does this change my system during installation?
-
-No. Installing the `.deb` only installs the app. The wizard changes hibernation configuration only after you review the plan and explicitly apply it.
-
-## Project keywords
-
-Ubuntu hibernate, Ubuntu hibernation, enable hibernation Ubuntu, Ubuntu hibernate not working, Ubuntu swap file hibernate, resume_offset, resume UUID, GRUB hibernate, initramfs hibernate, systemctl hibernate, GNOME Hibernate button, Hibernate Status Button, System Action Hibernate, Linux laptop hibernation.
-
-## Contributing
-
-Bug reports, Ubuntu compatibility reports, translation help, screenshots, documentation improvements, and support for more filesystems or bootloaders are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-GPL-3.0-or-later. Artwork, including banner and icon, is original and licensed CC-BY-4.0.
+The Configuration step again provides a swap-size slider, three suggested size buttons, and a manual GiB input for managed `/swap.img` creation/resizing. The real apply path still runs through the privileged helper, creates rollback metadata, validates the live swap-file UUID and resume offset, and shows the operation in Planned Modifications before writing boot configuration.

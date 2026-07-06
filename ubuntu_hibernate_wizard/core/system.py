@@ -47,7 +47,8 @@ class VerificationResult:
 
 
 def verify(swap_path: str, active_swaps: list[str], fs_uuid: str,
-           real_offset: int, cmdline: str, initramfs_resume: str) -> VerificationResult:
+           real_offset: int | None, cmdline: str, initramfs_resume: str,
+           *, target_kind: str = "file") -> VerificationResult:
     """Compare reality vs kernel vs initramfs (§24, §22 fixture)."""
     errors: list[str] = []
     fs_uuid = validate_uuid(fs_uuid)
@@ -66,16 +67,24 @@ def verify(swap_path: str, active_swaps: list[str], fs_uuid: str,
     if not uuid_ok:
         errors.append(f"kernel resume UUID {kuuid} != filesystem UUID {fs_uuid}")
 
-    offset_ok = params.resume_offset == real_offset
-    if not offset_ok:
-        errors.append(f"kernel resume_offset {params.resume_offset} "
-                      f"!= real offset {real_offset}")
+    if target_kind == "partition":
+        offset_ok = params.resume_offset is None
+        if not offset_ok:
+            errors.append("kernel resume_offset is present for a swap partition target")
+    else:
+        offset_ok = params.resume_offset == real_offset
+        if not offset_ok:
+            errors.append(f"kernel resume_offset {params.resume_offset} "
+                          f"!= real offset {real_offset}")
 
     init_lower = initramfs_resume.lower()
-    init_ok = (f"uuid={fs_uuid}" in init_lower
-               and f"resume_offset={real_offset}" in init_lower)
+    if target_kind == "partition":
+        init_ok = f"uuid={fs_uuid}" in init_lower and "resume_offset" not in init_lower
+    else:
+        init_ok = (f"uuid={fs_uuid}" in init_lower
+                   and f"resume_offset={real_offset}" in init_lower)
     if not init_ok:
-        errors.append("initramfs resume config does not match UUID+offset")
+        errors.append("initramfs resume config does not match selected target")
 
     return VerificationResult(swap_ok, uuid_ok, offset_ok, init_ok, errors)
 

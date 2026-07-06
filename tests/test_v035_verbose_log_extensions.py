@@ -15,22 +15,20 @@ def test_verbose_apply_log_mentions_exact_manipulations():
     required_fragments = [
         "Selected swap target",
         "Backups for changed system files will be written to",
-        "resume=UUID=",
-        "resume_offset=",
+        "Allowed managed files",
         "update-grub",
-        "update-initramfs -u -k all",
-        "systemd sleep override",
-        "polkit logind hibernate rule",
+        "update-initramfs -u",
+        "Dry-run mode",
+        "no system files will be written",
     ]
     for fragment in required_fragments:
         assert fragment in src
 
 
-def test_privileged_helper_implements_policy_and_config_steps():
+def test_privileged_helper_implements_v042_policy_and_config_steps():
     src = (ROOT / "ubuntu_hibernate_wizard/backend/privileged_helper.py").read_text()
-    assert "def cmd_update_fstab" in src
-    assert "def cmd_update_sleep_conf" in src
-    assert "def cmd_update_polkit_rule" in src
-    assert "/etc/systemd/sleep.conf.d/99-ubuntu-hibernate-wizard.conf" in src
-    assert "/etc/polkit-1/rules.d/49-ubuntu-hibernate-wizard.rules" in src
-    assert "org.freedesktop.login1.hibernate" in src
+    assert "run_one_shot" in src
+    assert "apply-plan" in src
+    assert "/etc/initramfs-tools/conf.d/resume" in src
+    assert "/etc/default/grub.d/hibernate-wizard.cfg" in src
+    assert "resize-swap" not in src.split("MUTATING", 1)[1].split("READ_ONLY", 1)[0]

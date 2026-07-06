@@ -1,0 +1,35 @@
+[
+  {
+    "active": true,
+    "backing_device": null,
+    "classification": "plain_swapfile",
+    "crypttab_name": null,
+    "crypttab_options": [],
+    "detail": "4.0 GiB swap, detected RAM 8.0 GiB",
+    "encrypted": false,
+    "encryption_source": [],
+    "encryption_stable": null,
+    "filesystem": "ext4",
+    "id": "/swap.img",
+    "kind": "file",
+    "mapper_is_crypt": null,
+    "mapper_name": null,
+    "parent_device": null,
+    "partuuid": null,
+    "path": "/swap.img",
+    "priority": -1,
+    "reasons": [],
+    "removable": false,
+    "resume_offset": 5986304,
+    "size_bytes": 4294967296,
+    "sparse": false,
+    "stable_resume_id": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "status": "warning_option",
+    "title": "Swap file /swap.img",
+    "used_bytes": 0,
+    "uuid": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "warnings": [
+      "Swap target is smaller than RAM; v0.42 blocks apply by default"
+    ]
+  }
+]

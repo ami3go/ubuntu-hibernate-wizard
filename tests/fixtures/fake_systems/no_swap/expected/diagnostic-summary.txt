@@ -1,0 +1,5 @@
+fixture=no_swap
+targets=0
+recommended=none
+blockers=No existing active disk swap target is usable for hibernation
+classifications=

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="partition icon">
+<title>Partition</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<rect x="10" y="15" width="44" height="35" rx="5" fill="#F8F8FB" stroke="#5F6673" stroke-width="3"/>
+<path d="M10 30h44M25 15v35M39 30v20" stroke="#6E35B4" stroke-width="3"/>
+<circle cx="18" cy="40" r="3" fill="#2FA84F"/>
+
+</svg>

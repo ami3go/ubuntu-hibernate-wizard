@@ -1,0 +1,5 @@
+fixture=read_only_filesystem
+targets=1
+recommended=/swap.img
+blockers=Configuration filesystem is marked read-only; automatic apply is blocked until writable /etc and boot configuration paths are available
+classifications=plain_swapfile

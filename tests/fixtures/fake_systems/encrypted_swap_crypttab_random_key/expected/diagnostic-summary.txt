@@ -1,0 +1,5 @@
+fixture=encrypted_swap_crypttab_random_key
+targets=1
+recommended=none
+blockers=No existing active disk swap target is usable for hibernation
+classifications=encrypted_random_key_swap

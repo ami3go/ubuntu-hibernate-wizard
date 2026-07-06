@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="swap file icon">
+<title>Swap File</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<path d="M18 10h20l10 10v34H18z" fill="#F8F8FB" stroke="#5F6673" stroke-width="3" stroke-linejoin="round"/>
+<path d="M38 10v12h10" fill="#E6E9EF" stroke="#5F6673" stroke-width="3" stroke-linejoin="round"/>
+<path d="M24 39h16M32 31v16M27 36l5-5 5 5M27 42l5 5 5-5" fill="none" stroke="#6E35B4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

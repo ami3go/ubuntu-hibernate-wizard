@@ -1,9 +1,10 @@
 #!/bin/sh
 set -e
+
 if [ "$1" = "purge" ]; then
-    rm -f /etc/polkit-1/rules.d/50-hibernate.rules
-    rm -f /etc/systemd/sleep.conf.d/hibernate.conf
-    rm -f /etc/systemd/logind.conf.d/hibernate-wizard.conf
+    # Keep hibernation configuration intact.  v0.42 managed config files should
+    # be changed only through the wizard rollback/removal flow, not silently by
+    # package purge.
     rm -rf /var/lib/ubuntu-hibernate-wizard
     systemctl disable ubuntu-hibernate-guard.timer 2>/dev/null || true
 fi

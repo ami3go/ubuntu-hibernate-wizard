@@ -1,0 +1,38 @@
+[
+  {
+    "active": true,
+    "backing_device": null,
+    "classification": "encrypted_persistent_swap",
+    "crypttab_name": null,
+    "crypttab_options": [],
+    "detail": "16.0 GiB swap, detected RAM 8.0 GiB",
+    "encrypted": true,
+    "encryption_source": [
+      "dmsetup"
+    ],
+    "encryption_stable": false,
+    "filesystem": null,
+    "id": "/dev/mapper/cryptswap",
+    "kind": "partition",
+    "mapper_is_crypt": true,
+    "mapper_name": "cryptswap",
+    "parent_device": null,
+    "partuuid": null,
+    "path": "/dev/mapper/cryptswap",
+    "priority": -2,
+    "reasons": [
+      "dmsetup indicates encrypted mapper swap; automatic resume path is not supported in this release",
+      "Encrypted swap is blocked unless a stable initramfs resume path is explicitly implemented and tested"
+    ],
+    "removable": false,
+    "resume_offset": null,
+    "size_bytes": 17179869184,
+    "sparse": false,
+    "stable_resume_id": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "status": "blocked",
+    "title": "Swap partition /dev/mapper/cryptswap",
+    "used_bytes": 0,
+    "uuid": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "warnings": []
+  }
+]

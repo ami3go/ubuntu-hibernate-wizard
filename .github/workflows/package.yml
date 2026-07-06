@@ -1,14 +1,49 @@
-name: Package
+name: Package QA
 on:
   push:
     tags: ['v*']
+  pull_request:
+    paths:
+      - 'ubuntu_hibernate_wizard/**'
+      - 'packaging/**'
+      - 'data/**'
+      - 'Makefile'
+      - '.github/workflows/package.yml'
+  workflow_dispatch:
+
 jobs:
   deb:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y lintian
-      - run: make deb
-      - run: lintian dist/*.deb || true
+      - name: Install package QA tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lintian desktop-file-utils appstream util-linux
+      - name: Build Debian package
+        run: make deb
+      - name: Lintian error gate
+        run: lintian --fail-on error dist/*.deb
+      - name: Install package in clean runner
+        run: sudo apt-get install -y ./dist/*.deb
+      - name: CLI verify smoke test
+        run: |
+          set +e
+          ubuntu-hibernate-wizard --verify >/tmp/uhw-verify.json
+          code=$?
+          set -e
+          cat /tmp/uhw-verify.json
+          # CI runners normally have no valid hibernation target, so 0 and 2 are both acceptable.
+          test "$code" = "0" -o "$code" = "2"
+      - name: Desktop and AppStream metadata smoke tests
+        run: |
+          desktop-file-validate /usr/share/applications/io.github.ami3go.UbuntuHibernateWizard.desktop
+          appstreamcli validate --no-net /usr/share/metainfo/io.github.ami3go.UbuntuHibernateWizard.metainfo.xml || true
+      - name: Remove and purge smoke test
+        run: |
+          sudo apt-get remove -y ubuntu-hibernate-wizard
+          sudo apt-get purge -y ubuntu-hibernate-wizard
       - uses: softprops/action-gh-release@v2
-        with: { files: dist/*.deb }
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/*.deb

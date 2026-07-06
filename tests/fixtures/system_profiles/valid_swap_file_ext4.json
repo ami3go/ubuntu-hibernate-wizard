@@ -1,0 +1,24 @@
+{
+  "ram_bytes": 8589934592,
+  "distro": "ubuntu",
+  "distro_version": "Ubuntu 24.04 LTS",
+  "kernel": "6.8.0-test",
+  "power_state": "freeze mem disk",
+  "secure_boot": "disabled",
+  "lockdown": "none",
+  "bootloader": "grub",
+  "initramfs": "initramfs-tools",
+  "timeshift_available": false,
+  "cmdline": "BOOT_IMAGE=/vmlinuz root=UUID=root ro quiet splash",
+  "initramfs_resume": "",
+  "fstab": "",
+  "swapon": "NAME TYPE SIZE USED PRIO\n/swap.img file 17179869184 0 -1\n",
+  "swap_details": {
+    "/swap.img": {
+      "filesystem": "ext4",
+      "uuid": "d76e67b3-404f-461e-a961-7963664d66b3",
+      "resume_offset": 5986304,
+      "backing_device": "/dev/nvme0n1p2"
+    }
+  }
+}

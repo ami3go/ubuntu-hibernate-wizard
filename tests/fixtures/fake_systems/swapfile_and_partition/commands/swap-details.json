@@ -1,0 +1,11 @@
+{
+  "/dev/nvme0n1p3": {
+    "partuuid": "11111111-2222-3333-4444-555555555555",
+    "uuid": "d76e67b3-404f-461e-a961-7963664d66b3"
+  },
+  "/swap.img": {
+    "filesystem": "ext4",
+    "resume_offset": 123456,
+    "uuid": "aaaaaaaa-404f-461e-a961-7963664d66b3"
+  }
+}

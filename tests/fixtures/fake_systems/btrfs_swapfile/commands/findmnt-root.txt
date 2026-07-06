@@ -1,0 +1,1 @@
+/dev/disk/by-uuid/aaaaaaaa-404f-461e-a961-7963664d66b3 ext4 aaaaaaaa-404f-461e-a961-7963664d66b3

@@ -120,3 +120,28 @@ def resume_uuid(params: ResumeParams) -> str | None:
     if params.resume and params.resume.upper().startswith("UUID="):
         return params.resume.split("=", 1)[1].lower()
     return None
+
+# ---------------------------------------------------------------- btrfs swapfile
+_BTRFS_OFFSET = re.compile(r"^\s*(\d+)\s*$")
+
+
+def parse_btrfs_map_swapfile_offset(output: str) -> int:
+    """Parse `btrfs inspect-internal map-swapfile -r <file>` output.
+
+    The `-r` mode is expected to return the numeric kernel resume_offset value.
+    Never infer or convert units from other btrfs output formats.
+    """
+    line = output.strip().splitlines()[0] if output.strip() else ""
+    m = _BTRFS_OFFSET.match(line)
+    if not m:
+        raise ParseError("btrfs map-swapfile output is not a numeric resume offset")
+    value = int(m.group(1))
+    if value <= 0:
+        raise ParseError("btrfs map-swapfile returned non-positive resume offset")
+    return value
+
+
+def filefrag_output_has_holes(output: str) -> bool:
+    """Return True when filefrag output suggests an unsafe sparse swap file."""
+    lower = output.lower()
+    return "hole" in lower or "delalloc" in lower or "unknown_loc" in lower

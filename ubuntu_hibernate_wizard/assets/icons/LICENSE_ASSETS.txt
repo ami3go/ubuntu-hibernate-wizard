@@ -1,0 +1,5 @@
+Ubuntu Hibernate Wizard GUI icon assets
+
+These SVG and PNG files were generated as original artwork for this project using simple geometric vector primitives. No external icon set, Ubuntu logo, Tux penguin, GNOME/Adwaita artwork, Font Awesome, Material Icons, or other trademarked/licensed symbol artwork is embedded.
+
+Recommended project license for these generated assets: CC0-1.0 or the same permissive license as the application, at the project maintainer's choice. Keep this note with the asset package.

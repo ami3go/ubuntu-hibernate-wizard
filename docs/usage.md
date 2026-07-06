@@ -1,65 +1,69 @@
-# Usage Guide
+---
+title: Use Ubuntu Hibernate Wizard safely
+description: Step-by-step workflow for detecting an existing swap target, reviewing planned hibernation changes, applying safely, and verifying after reboot.
+---
 
-## Before you start
+# Usage
 
-- Save your work — a reboot is required, and the final step tests hibernation.
-- Have ~1.2× your RAM in free disk space (an 18 GB swap file for 16 GB RAM).
-- On laptops: plug in the charger.
+Ubuntu Hibernate Wizard is designed as a review-first workflow. Apply stays blocked when the system does not match the supported v0.42 scope.
 
-## Step-by-step
+## Step-by-step workflow
 
-### 1. Welcome
-Read what will be changed (GRUB, fstab, initramfs, systemd sleep, polkit). Tick the consent checkbox to continue. Nothing is modified yet.
+1. Launch **Ubuntu Hibernate Wizard**.
+2. Read the **Introduction** page and confirm the v0.42 scope.
+3. Run **System Check**.
+4. Select an existing valid swap partition or swap file on **Configuration**.
+5. Review exact managed file changes on **Planned Modifications**.
+6. Run dry-run first on **Review & Apply**.
+7. Apply the plan only after reviewing the log.
+8. Reboot manually from the system menu when ready.
+9. Run verification after reboot.
 
-### 2. System check
-The wizard verifies: Ubuntu version, ext4 root, GRUB, initramfs-tools, kernel hibernate support, Secure Boot state, and existing swap.
+## What blocks Apply
 
-- ✅ All green — continue.
-- ⚠️ **Secure Boot enabled** — kernel lockdown usually blocks hibernation. You may continue in advanced mode, but the hibernate test may fail; disabling Secure Boot in firmware settings is the reliable fix.
-- 🛑 Unsupported (Btrfs, no GRUB, VM without support) — the wizard stops safely and explains why.
+Apply remains blocked for:
 
-### 3. Swap file
-Pick a size: **Recommended (RAM + 2 GB)** suits almost everyone. You can also type an exact custom size in the **Custom swap size** field. If you have zram only, a disk swap file is created alongside it; zram is kept.
+- zram-only systems;
+- no active swap target;
+- inactive swap;
+- swap smaller than RAM;
+- unsupported swap-file filesystem;
+- missing GRUB or missing `update-grub`;
+- missing initramfs-tools;
+- conflicting existing `resume=`, `resume_offset=`, or `RESUME=` configuration;
+- random-key or unproven encrypted swap;
+- removable-media swap.
 
-### 4. Review the plan
-Every command the wizard intends to run is listed. Nothing executes until you press **Apply Changes**. You'll be asked for your password **once** here.
+## Dry-run mode
 
-### 5. Apply
-Watch the collapsible live log: swap creation (the longest step — writing 18 GB takes a few minutes), fstab, UUID and offset calculation, GRUB, initramfs, systemd sleep config, and polkit. Each line includes a timestamp and explains exactly what is manipulated: target paths, backup paths, commands such as `update-grub` and `update-initramfs -u -k all`, the calculated `resume=UUID=...`, the measured `resume_offset=...`, and whether each file was changed or already correct. Every original file is backed up to `/var/backups/ubuntu-hibernate-wizard/<timestamp>/` first. When this step finishes, the full log is saved to `~/Downloads/hibernation_wizard_<timestamp>.log`.
-
-After a successful apply you can choose **Reboot Now** or **Reboot Later**.
-
-### 6. Reboot
-Required — the kernel must load the new resume parameters. Use **Reboot Now** to restart immediately or **Reboot Later** if you want to close your work first.
-
-### 7. Verify (after reboot)
-Open the wizard again. It compares what the kernel is actually using against reality:
-
-| Check | Meaning |
-|---|---|
-| Active swap | your swap file is live |
-| Resume UUID | kernel points at the right filesystem |
-| Resume offset | kernel points at the right position in the file |
-| initramfs | early-boot config matches |
-
-A ❌ on offset is the classic stale-offset bug — press **Repair and Reboot** and the wizard recalculates and rewrites everything.
-
-### 8. Test hibernate
-Press **Test Hibernation**. The machine writes a marker, hibernates (screen off, power off), and when you power it back on your session should resume exactly where it was. The wizard confirms the test on resume.
-
-### 9. Optional extras
-- The final **Next Steps** page links to **Hibernate Status Button**, which adds Hibernate and Hybrid Sleep actions to the GNOME status menu.
-- It also links to **System Action - Hibernate**, which adds Hibernate among GNOME system actions.
-- Enable the **boot-time guard** so you're notified if a kernel update ever breaks the configuration.
-
-## Command line (v1.2+)
+Dry-run mode generates a plan and simulates helper events without writing files:
 
 ```bash
-sudo ubuntu-hibernate-wizard --verify --json
+ubuntu-hibernate-wizard --dry-run
 ```
 
-Exit codes: `0` ok · `2` mismatch found · `3` cannot check (run with sudo).
+From source:
 
-## Removing hibernation
+```bash
+PYTHONPATH=. python3 -m ubuntu_hibernate_wizard.main --dry-run
+```
 
-Menu → **Remove hibernation**: reverses all configuration and can optionally delete the swap file (only if the wizard created it), reclaiming the disk space.
+## Fake-system mode
+
+Fake-system mode is useful for screenshots, tests, and code review:
+
+```bash
+PYTHONPATH=. python3 -m ubuntu_hibernate_wizard.main \
+  --dry-run \
+  --fake-system tests/fixtures/system_profiles/valid_swap_file_ext4.json
+```
+
+## Verify after reboot
+
+After manual reboot, run:
+
+```bash
+ubuntu-hibernate-wizard --verify
+```
+
+The verification command compares active swap, kernel command-line resume parameters, and initramfs resume configuration.

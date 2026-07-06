@@ -1,0 +1,7 @@
+{
+  "available": false,
+  "blocking_reasons": [
+    "No existing active disk swap target is usable for hibernation"
+  ],
+  "can_apply": false
+}

@@ -1,52 +1,76 @@
+# 0.42.12
+
+- Moved the Recommended swap-file size slider mark above the slider to avoid overlap with the Minimum mark.
+- Kept Minimum and 2× RAM marks below the slider while preserving the manual input and preset buttons.
+
+# 0.42.8
+
+- Added production/public-use hardening: fake-system golden fixtures, encrypted swap blocking, Diagnostic ZIP export, GTK CI smoke tests, static safety tests, stable GUI object names, and complete runtime diagram documentation.
+
 # Changelog
 
-## Unreleased
-- Documentation: SEO-optimized README and GitHub Pages home page for Ubuntu hibernation search terms.
+## 0.42.6 - Documentation and GitHub Pages refresh
 
-## [0.3.5] - 2026-07-05
-- Add **System Action - Hibernate** as a second GNOME Shell extension option on the final Next Steps page.
-- Make Step 5 apply logs more verbose: record exact files, commands, backup paths, selected swap size, UUID, resume offset, policy changes, and changed/already-correct results.
-- Implement and log the fstab, systemd sleep drop-in, and polkit rule helper steps that were already listed in the plan.
+- Reworked the GitHub README as a complete project landing page with screenshot overview, safety model, supported-system matrix, installation, development, and documentation links.
+- Added GTK4 menu screenshots to GitHub Pages assets and linked them from screenshots/examples documentation.
+- Expanded GitHub Pages content for Installation, Usage, Troubleshooting, FAQ, Architecture, Testing, Rollback, and deployment/SEO notes.
+- Updated MkDocs Material configuration with navigation features, code-copy support, repository links, and a more accurate search-oriented site description.
+- Kept runtime scope unchanged: existing active swap partition/file targets only.
 
-## [0.3.4] - 2026-07-05
-- Add custom swap-size text field on the swap step.
-- Replace the single-line apply status with a collapsible timestamped live log.
-- Save the full apply log to `~/Downloads/hibernation_wizard_<timestamp>.log` when the apply step finishes.
-- Add **Reboot Now** and **Reboot Later** choices after successful apply.
-- Add a final next-steps page linking to the GNOME Hibernate Status Button extension.
+## 0.42.5 - Code cleanup and helper hardening
 
-## [0.3.3] - 2026-07-05
-- Add GitHub Pages publishing workflow using current Pages actions.
-- Add MkDocs site metadata and GitHub Pages deployment documentation.
+- Removed stale duplicate helper source files and unused helper methods left from older swap-creation flows.
+- Reworked CLI verification to use the v0.42 system probe and swap classifier instead of duplicate filefrag parsing.
+- Made generated GRUB fragments idempotent so matching resume kernel parameters are not duplicated.
+- Strengthened one-shot helper schema validation for app version, dry-run type, duplicate steps/files, rollback mode, UUID, and selected-target fields.
+- Removed unused Gate E host helper and refreshed tests for cleanup/hardening behavior.
 
-## [0.3.2] - 2026-07-05
-- Fix overlapping Minimum/Recommended slider labels: Recommended now sits
-  above the track; wider GNOME-Disks-style slider with 4 GB ticks
+## 0.42.4 - Gate F release-candidate evidence tooling
 
+- Added Gate F CLI workflow to validate Gate E apply evidence plus a manual hibernate/resume record.
+- Added manual record generation with exact Gate E report SHA-256 linking.
+- Added release-candidate manifest generation and documentation.
+- Updated Help/Finish gate messaging to describe Gate F evidence requirements.
 
-## [0.3.1] - 2026-07-05
-- Swap size slider with RAM-mapped marks (Minimum / Recommended / Double RAM),
-  synced with preset rows; detected RAM shown in the header
+## 0.42.2 - Gate E validation harness
 
-
-## [0.3.0] - 2026-07-05
-- Back/Next buttons on every page - no more dead ends
-- Full wizard flow: Swap size -> Plan -> Apply (live progress) -> Verify -> Repair
-- "Verify existing configuration" shortcut on Welcome for the post-reboot flow
+- Added disposable-VM Gate E validation CLI modes.
+- Added guarded real-apply Gate E command requiring exact VM acknowledgement.
+- Added JSON Gate E reports with redacted summaries.
+- Added `tools/gate_e_vm_validate.sh` release-validation helper.
+- Added Gate E documentation and safety tests.
 
 
-## [0.2.1] - 2026-07-05
-- Fix: package was uninstallable on modern Ubuntu — depend on pkexec + polkitd
-  instead of the removed transitional policykit-1
+## 0.42.1 - GTK4 hardening update
 
+- System Check now uses an unprivileged read-only probe and avoids pkexec prompts.
+- UI now loads bundled original SVG icons instead of theme symbolic icon names.
+- Added GTK-style apply and runtime hibernation process diagrams.
+- Added GUI diagnostic report export with redaction.
+- Strengthened helper one-shot schema validation and live reclassification before apply.
+- Blocked btrfs swap-file targets unless btrfs map-swapfile returns the kernel resume_offset.
+- Blocked encrypted swap unless stable initramfs mapping is explicitly proven.
+- Added hardening tests and golden config tests.
 
-## [0.2.0] - 2026-07-05
-- CLI verify mode (`--verify --json`, exit codes 0/2/3)
-- Boot-time guard service + session notify watcher (shipped inert)
-- State schema v1 with swap_preexisting provenance
-- Original banner and GNOME-style scalable icon
+## [0.42.0] - 2026-07-06
 
-## [0.1.0] - 2026-07-05
-- Initial release: parsers, GRUB/fstab editors, verification (§22 fixture),
-  crash-safe resize with journal, single-elevation helper session, GTK4 UI
-  (Welcome + System Check), .deb packaging
+### Changed
+
+- Reworked the app around the v0.42 GTK4/libadwaita implementation task.
+- Added persistent sidebar navigation: Introduction, System Check, Configuration, Planned Modifications, Review & Apply, Finish, Help, and About.
+- Added service-layer swap target classification for existing active swap partitions/files.
+- Added dry-run and fake-system modes for safe UI/planner testing.
+- Updated the privileged helper with the v0.42 one-shot `apply-plan` JSON protocol.
+- Moved apply scope to managed files only: `/etc/initramfs-tools/conf.d/resume` and `/etc/default/grub.d/hibernate-wizard.cfg`.
+- Added original GTK-style icon assets to the package tree.
+
+### Safety
+
+- Removed swap creation/resizing from the v0.42 apply path.
+- Removed fstab, systemd sleep, and runtime polkit rule changes from the v0.42 apply path.
+- Blocked zram, undersized swap, unsupported filesystems, inactive swap, and non-GRUB/initramfs-tools systems.
+- Added tests for swap decision logic, generated config, conflict detection, and btrfs offset parsing.
+
+## [0.36.8] - 2026-07-06
+
+- Previous GTK4 wizard and documentation/SEO review baseline.

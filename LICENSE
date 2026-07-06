@@ -10,5 +10,6 @@ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
 details: https://www.gnu.org/licenses/gpl-3.0.txt
 
-Artwork (data/banner.svg, data/icons/*.svg) is original work licensed
-CC-BY-4.0: https://creativecommons.org/licenses/by/4.0/
+Artwork and branding assets bundled under data/, docs/assets/, and ubuntu_hibernate_wizard/assets/
+(including banner and icon image files) are distributed with this project for application
+branding/documentation use.

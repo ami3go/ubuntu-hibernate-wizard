@@ -1,0 +1,32 @@
+.uhw-root { background: @window_bg_color; }
+.uhw-sidebar { background: @sidebar_bg_color; border-radius: 16px; padding: 12px; }
+.uhw-card { background: @card_bg_color; border-radius: 18px; padding: 18px; box-shadow: 0 1px 3px alpha(black, 0.10); }
+.heading { font-weight: 700; font-size: 1.05em; }
+.success { color: @success_color; font-weight: 700; }
+.warning { color: @warning_color; font-weight: 700; }
+.error { color: @error_color; font-weight: 700; }
+.accent { background: alpha(@accent_color, 0.14); border-radius: 12px; }
+.uhw-diagram { margin-top: 8px; }
+.uhw-diagram-step { background: alpha(@accent_color, 0.08); border-radius: 14px; padding: 10px; }
+
+/* v0.42.12 layout and cleanup hardening: no fixed content heights, wrapping rows, safe footer spacing. */
+.uhw-button-row { margin-top: 4px; margin-bottom: 4px; }
+.uhw-row { background: @card_bg_color; border-radius: 14px; padding: 12px; border: 1px solid @borders; }
+.uhw-row-disabled { opacity: 0.62; }
+.uhw-row-title { font-weight: 700; }
+.uhw-kv-key { font-weight: 700; color: @window_fg_color; }
+.uhw-pill { border-radius: 999px; padding: 5px 10px; font-weight: 700; }
+.uhw-pill-success { color: @success_color; background: alpha(@success_color, 0.12); }
+.uhw-pill-warning { color: @warning_color; background: alpha(@warning_color, 0.12); }
+.uhw-pill-error { color: @error_color; background: alpha(@error_color, 0.12); }
+.uhw-pill-active { color: @accent_color; background: alpha(@accent_color, 0.14); }
+.uhw-diagram { margin-top: 10px; }
+.uhw-diagram-step { min-width: 112px; background: alpha(@accent_color, 0.08); border-radius: 14px; padding: 10px; }
+.uhw-diagram-icon { margin-top: 2px; margin-bottom: 2px; }
+.uhw-diagram-badge { padding: 3px 7px; font-size: 0.9em; }
+.uhw-diagram-label { font-weight: 700; font-size: 1.02em; }
+
+/* v0.42.18 apply-phase diagram layout update. */
+.uhw-nav-row { border-radius: 12px; }
+.uhw-nav-row label { font-weight: 500; }
+.uhw-nav-row.accent label { font-weight: 700; }

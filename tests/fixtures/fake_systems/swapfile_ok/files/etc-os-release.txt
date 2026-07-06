@@ -1,0 +1,2 @@
+ID=ubuntu
+PRETTY_NAME="Ubuntu fixture"

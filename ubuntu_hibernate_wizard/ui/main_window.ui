@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <!-- v0.42 keeps layout in Python controllers for compatibility; this Builder
+       file reserves the resource path mandated by the task and documents the
+       GTK Builder XML implementation direction for future widget extraction. -->
+</interface>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="initramfs box icon">
+<title>Initramfs Box</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<path d="M32 9l20 12v24L32 57 12 45V21z" fill="#E6E9EF" stroke="#5F6673" stroke-width="3" stroke-linejoin="round"/>
+<path d="M12 21l20 12 20-12M32 33v24" fill="none" stroke="#5F6673" stroke-width="3" stroke-linejoin="round"/>
+<path d="M23 18l20 12" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+
+</svg>

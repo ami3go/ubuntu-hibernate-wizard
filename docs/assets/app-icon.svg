@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2f5c"/>
+      <stop offset="1" stop-color="#1a1c3a"/>
+    </linearGradient>
+    <linearGradient id="blanket" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a90e8"/>
+      <stop offset="1" stop-color="#2f6fd0"/>
+    </linearGradient>
+    <linearGradient id="blanketFold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a7cd8"/>
+      <stop offset="1" stop-color="#2a5fb8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="26" fill="url(#bg)"/>
+  <g fill="#cdd6ff">
+    <circle cx="30" cy="30" r="2.2"/>
+    <circle cx="100" cy="26" r="1.6"/>
+    <circle cx="88" cy="42" r="1.3"/>
+    <circle cx="26" cy="56" r="1.4"/>
+    <path d="M104 52l1.5 3.4 3.5 1.4-3.5 1.4-1.5 3.4-1.5-3.4-3.5-1.4 3.5-1.4z"/>
+  </g>
+  <path d="M46 22a12 12 0 1 0 10 16 9.5 9.5 0 0 1-10-16z" fill="#f3e9c8"/>
+  <path d="M64 44c-22 0-36 15-36 36 0 12 6 20 14 24h44c8-4 14-12 14-24 0-21-14-36-36-36z" fill="url(#blanket)"/>
+  <path d="M28 92c4 10 14 16 36 16s32-6 36-16c-8 6-20 9-36 9s-28-3-36-9z" fill="url(#blanketFold)"/>
+  <path d="M42 62c8-8 36-8 44 0-4 12-8 18-22 18s-18-6-22-18z" fill="url(#blanketFold)" opacity="0.55"/>
+  <path d="M44 82a7 7 0 1 0 6 9.5A5.6 5.6 0 0 1 44 82z" fill="#bcd6ff" opacity="0.9"/>
+  <path d="M84 86l1.2 2.7 2.8 1.1-2.8 1.1-1.2 2.7-1.2-2.7-2.8-1.1 2.8-1.1z" fill="#bcd6ff" opacity="0.9"/>
+  <g>
+    <path d="M64 26c-13 0-21 9-21 21 0 8 4 13 9 15h24c5-2 9-7 9-15 0-12-8-21-21-21z" fill="#2b2b33"/>
+    <path d="M64 38c-8 0-13 5-13 12 0 6 3 10 7 12h12c4-2 7-6 7-12 0-7-5-12-13-12z" fill="#f4f1ea"/>
+    <path d="M53 49q3.5 3 7 0" fill="none" stroke="#2b2b33" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M68 49q3.5 3 7 0" fill="none" stroke="#2b2b33" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M58 56c0-3 3-5 6-5s6 2 6 5-3 5.5-6 5.5-6-2.5-6-5.5z" fill="#f4a63a"/>
+    <path d="M58 56.5c2 1.6 10 1.6 12 0-1 3-3.5 5-6 5s-5-2-6-5z" fill="#e08f22"/>
+  </g>
+  <g fill="#cdd6ff">
+    <path d="M88 30h8l-8 8h8v3h-13l8-8h-3z" transform="translate(2 -4) scale(0.9)"/>
+  </g>
+</svg>

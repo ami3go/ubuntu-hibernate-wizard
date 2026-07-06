@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ami3go.github.io/ubuntu-hibernate-wizard/sitemap.xml

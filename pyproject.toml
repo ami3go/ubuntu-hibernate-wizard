@@ -1,9 +1,15 @@
 [project]
 name = "ubuntu-hibernate-wizard"
-version = "0.3.5"
+version = "0.4.3rc1"
 description = "GUI wizard to enable, repair, and verify hibernation on Ubuntu"
 requires-python = ">=3.11"
 license = {text = "GPL-3.0-or-later"}
 
 [project.scripts]
 ubuntu-hibernate-wizard = "ubuntu_hibernate_wizard.main:main"
+
+[tool.setuptools.package-data]
+ubuntu_hibernate_wizard = [
+  "ui/*.ui", "ui/*.xml", "css/*.css", "assets/*.png", "assets/*.svg", "assets/icons/*.png", "assets/icons/*.svg",
+  "assets/icons/*.txt", "assets/icons/*.json", "*.gresource"
+]

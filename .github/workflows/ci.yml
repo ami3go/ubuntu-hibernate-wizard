@@ -1,9 +1,53 @@
-name: CI
-on: [push, pull_request]
+name: Ubuntu CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
 jobs:
-  test:
+  tests:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: pip install pytest
-      - run: python3 -m pytest tests/ -v
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3 \
+            python3-pip \
+            python3-pytest \
+            python3-gi \
+            gir1.2-gtk-4.0 \
+            gir1.2-adw-1 \
+            libgtk-4-1 \
+            libadwaita-1-0 \
+            xvfb \
+            dbus-x11
+
+      - name: Verify GTK Python environment
+        run: |
+          /usr/bin/python3 - <<'PY'
+          import gi
+          gi.require_version('Gtk', '4.0')
+          gi.require_version('Adw', '1')
+          from gi.repository import Gtk, Adw
+          print('GTK/libadwaita Python environment OK')
+          PY
+
+      - name: Install project for system Python
+        run: |
+          /usr/bin/python3 -m pip install --break-system-packages -e .
+
+      - name: Run unit tests
+        run: /usr/bin/python3 -m pytest tests -q --ignore=tests/gui --ignore=tests/integration --ignore=tests/static
+
+      - name: Run integration fixture tests
+        run: /usr/bin/python3 -m pytest tests/integration -q
+
+      - name: Run static safety tests
+        run: /usr/bin/python3 -m pytest tests/static -q
+
+      - name: Run GTK smoke tests
+        run: xvfb-run -a dbus-run-session -- /usr/bin/python3 -m pytest tests/gui -q

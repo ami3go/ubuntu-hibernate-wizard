@@ -1,0 +1,2 @@
+Filename				Type		Size	Used	Priority
+/dev/nvme0n1p3				partition		16777216	0	-2

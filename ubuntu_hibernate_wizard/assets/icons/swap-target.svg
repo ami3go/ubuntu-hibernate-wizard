@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="swap target icon">
+<title>Swap Target</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<rect x="14" y="28" width="36" height="18" rx="4" fill="#E6E9EF" stroke="#5F6673" stroke-width="3"/>
+<path d="M22 28l4-10h20l4 10" fill="#F8F8FB" stroke="#5F6673" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="26" cy="40" r="2.5" fill="#5F6673"/>
+<path d="M33 24a12 12 0 1 0 11.4 15.7H33z" fill="#6E35B4"/>
+<path d="M33 12v12h12A12 12 0 0 0 33 12z" fill="#8A4BD1"/>
+
+</svg>

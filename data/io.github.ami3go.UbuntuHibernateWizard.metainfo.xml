@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.ami3go.UbuntuHibernateWizard</id>
+  <name>Ubuntu Hibernate Wizard</name>
+  <summary>Configure Ubuntu hibernation with an existing valid swap target</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <description>
+    <p>Ubuntu Hibernate Wizard is a GTK4/libadwaita safety wizard for Ubuntu systems using GRUB and initramfs-tools.</p>
+    <p>Version 0.42.12 supports existing active swap targets and a controlled managed /swap.img create/resize flow with RAM-based slider marks. It does not repartition disks or reboot automatically.</p>
+  </description>
+  <releases>
+    <release version="0.4.3-rc1" date="2026-07-07"/>
+    <release version="0.42.12" date="2026-07-06">
+      <description>
+        <p>Restores managed swap-file sizing controls: slider, three presets, and manual GiB input.</p>
+      </description>
+    </release>
+    <release version="0.42.8" date="2026-07-06">
+      <description><p>Production-readiness hardening: fake-system golden fixtures, encrypted-swap blocking, diagnostic ZIP export, GTK smoke tests, static safety checks, and complete runtime-flow documentation.</p></description>
+    </release>
+    <release version="0.42.5" date="2026-07-06">
+      <description><p>Code cleanup, idempotent GRUB fragment generation, and stricter helper validation.</p></description>
+    </release>
+  </releases>
+  <launchable type="desktop-id">io.github.ami3go.UbuntuHibernateWizard.desktop</launchable>
+  <provides><binary>ubuntu-hibernate-wizard</binary></provides>
+</component>

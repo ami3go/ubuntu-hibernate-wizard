@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="system check icon">
+<title>System Check</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+<circle cx="32" cy="32" r="29" fill="#2FA84F"/>
+<path d="M32 14l17 7v11c0 11-7.4 17.6-17 21-9.6-3.4-17-10-17-21V21l17-7z" fill="#fff" opacity=".92"/>
+<path d="M24 32l6 6 12-13" fill="none" stroke="#2FA84F" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

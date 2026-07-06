@@ -1,26 +1,79 @@
-site_name: Hibernate Wizard for Ubuntu
-site_description: Enable, verify, and repair Ubuntu hibernation with swap file, GRUB resume_offset, initramfs, systemd, and GNOME Hibernate button guidance.
+site_name: Ubuntu Hibernate Wizard
+site_description: Safety-first GTK4 wizard for configuring Ubuntu hibernation with an existing swap partition or swap file, GRUB resume UUID, resume_offset, and initramfs-tools.
 site_author: ami3go
 site_url: https://ami3go.github.io/ubuntu-hibernate-wizard/
 repo_url: https://github.com/ami3go/ubuntu-hibernate-wizard
 repo_name: ami3go/ubuntu-hibernate-wizard
 edit_uri: edit/main/docs/
+docs_dir: docs
+use_directory_urls: true
+
+copyright: Copyright &copy; Ubuntu Hibernate Wizard contributors
+
 theme:
   name: material
+  language: en
+  logo: assets/app-icon.png
+  favicon: assets/app-icon.png
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
   palette:
     - scheme: default
-      toggle: { icon: material/weather-night, name: Dark mode }
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
     - scheme: slate
-      toggle: { icon: material/weather-sunny, name: Light mode }
-markdown_extensions: [admonition, tables, pymdownx.superfences]
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - meta
+  - tables
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
 nav:
   - Home: index.md
-  - Installation: installation.md
-  - Usage: usage.md
-  - How Hibernation Works: how-hibernation-works.md
+  - Install: installation.md
+  - Use: usage.md
+  - Screenshots: screenshots-and-examples.md
+  - Hibernation Concepts: how-hibernation-works.md
   - Troubleshooting: troubleshooting.md
-  - Rollback & Recovery: rollback-and-recovery.md
+  - Rollback: rollback-and-recovery.md
   - Architecture: architecture.md
   - Testing: testing.md
-  - GitHub Pages: github-pages.md
+  - Gate E VM Validation: gate-e-vm-validation.md
+  - Gate F Release Candidate: gate-f-release-candidate.md
   - FAQ: faq.md
+  - GitHub Pages: github-pages.md
+  - Release Notes:
+      - v0.42.1 Hardening: v0421-hardening-notes.md
+      - v0.42.5 Code Cleanup: v0425-code-review-cleanup-notes.md
+      - v0.42.8 Docs Refresh: v0426-docs-seo-refresh-notes.md
+
+  - Diagnostics: diagnostics.md
+  - GUI Object Names: gui-object-names.md
+  - Release Notes v0.42: release-notes-v0.42.md
+  - Legacy Code Audit: legacy-code-audit.md

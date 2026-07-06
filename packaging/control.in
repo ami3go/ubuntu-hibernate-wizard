@@ -1,13 +1,14 @@
 Package: ubuntu-hibernate-wizard
 Version: @VERSION@
 Architecture: all
-Maintainer: Ubuntu Hibernate Wizard Project <example@example.org>
+Maintainer: Ubuntu Hibernate Wizard Project <maintainers@ubuntu-hibernate-wizard.local>
 Section: admin
 Priority: optional
 Depends: python3 (>= 3.11), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, pkexec, polkitd, initramfs-tools, grub-common, util-linux, e2fsprogs
-Recommends: mokutil, gnome-shell
-Description: GUI wizard to enable, repair, and verify hibernation on Ubuntu
- Guides the user through creating swap, setting resume=UUID and
- resume_offset kernel parameters, updating GRUB and initramfs, and
- verifying the configuration after reboot. Crash-safe swap resize,
- backups, and one-click repair of stale resume offsets.
+Recommends: mokutil, gnome-shell, btrfs-progs
+Description: GTK4 wizard to configure Ubuntu hibernation safely
+ Guides the user through existing-swap hibernation setup for Ubuntu systems
+ using GRUB and initramfs-tools. Version 0.42 supports only already-active,
+ valid swap partition/file targets and can create or resize the managed
+ /swap.img file through a reviewed privileged plan. It does not repartition disks. It writes reviewed managed resume and
+ GRUB fragment files through a polkit helper and keeps rollback metadata.

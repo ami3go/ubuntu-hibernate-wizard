@@ -1,0 +1,12 @@
+{
+  "blockdevices": [
+    {
+      "name": "nvme0n1p3",
+      "kname": "nvme0n1p3",
+      "type": "part",
+      "fstype": "swap",
+      "uuid": "d76e67b3-404f-461e-a961-7963664d66b3",
+      "partuuid": "11111111-2222-3333-4444-555555555555"
+    }
+  ]
+}

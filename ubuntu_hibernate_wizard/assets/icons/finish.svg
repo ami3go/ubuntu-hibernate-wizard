@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="finish icon">
+<title>Finish</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+<circle cx="32" cy="32" r="29" fill="#2FA84F"/>
+<path d="M20 49V16" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+<path d="M22 18h24l-5 9 5 9H22" fill="#fff" opacity=".95"/>
+<path d="M27 27h12" stroke="#2FA84F" stroke-width="3.5" stroke-linecap="round"/>
+
+</svg>

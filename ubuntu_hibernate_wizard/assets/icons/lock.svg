@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="lock icon">
+<title>Lock</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+<circle cx="32" cy="32" r="29" fill="#5F6673"/>
+<rect x="19" y="29" width="26" height="19" rx="4" fill="#fff"/>
+<path d="M23 29v-6a9 9 0 0 1 18 0v6" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+<circle cx="32" cy="39" r="3" fill="#5F6673"/>
+
+</svg>

@@ -1,0 +1,19 @@
+{
+  "available": true,
+  "blocking_reasons": [],
+  "can_apply": true,
+  "planned_files": [
+    "/etc/initramfs-tools/conf.d/resume",
+    "/etc/default/grub.d/hibernate-wizard.cfg"
+  ],
+  "selected_target": "/swap.img",
+  "steps": [
+    "validate_target",
+    "create_rollback",
+    "write_resume_config",
+    "write_grub_config",
+    "update_initramfs",
+    "update_grub"
+  ],
+  "warnings": []
+}

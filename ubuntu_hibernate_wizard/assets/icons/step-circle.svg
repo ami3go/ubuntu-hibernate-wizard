@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="step circle icon">
+<title>Step Circle</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+<circle cx="32" cy="32" r="29" fill="#6E35B4"/>
+<path d="M26 22h8v20" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M25 42h15" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+
+</svg>

@@ -1,0 +1,5 @@
+fixture=swapfile_and_partition
+targets=2
+recommended=/dev/nvme0n1p3
+blockers=none
+classifications=plain_swapfile, plain_swap_partition

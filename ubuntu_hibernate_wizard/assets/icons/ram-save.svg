@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="ram save icon">
+<title>Ram Save</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<rect x="12" y="23" width="40" height="19" rx="3" fill="#2FA84F" stroke="#2B2F38" stroke-width="3"/>
+<g fill="#D9F0DE"><rect x="18" y="28" width="5" height="9"/><rect x="27" y="28" width="5" height="9"/><rect x="36" y="28" width="5" height="9"/></g>
+<g stroke="#2B2F38" stroke-width="3" stroke-linecap="round"><path d="M18 43v5M25 43v5M32 43v5M39 43v5M46 43v5"/></g>
+<path d="M32 15v13M26 22l6 6 6-6" fill="none" stroke="#1E73BE" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="disk icon">
+<title>Disk</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<rect x="13" y="17" width="38" height="35" rx="5" fill="#E6E9EF" stroke="#5F6673" stroke-width="3"/>
+<circle cx="32" cy="34" r="9" fill="#fff" stroke="#5F6673" stroke-width="3"/>
+<circle cx="32" cy="34" r="2.5" fill="#5F6673"/>
+<circle cx="23" cy="45" r="2" fill="#2FA84F"/>
+
+</svg>

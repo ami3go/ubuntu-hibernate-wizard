@@ -1,0 +1,39 @@
+[
+  {
+    "active": true,
+    "backing_device": null,
+    "classification": "unknown_mapper_swap",
+    "crypttab_name": null,
+    "crypttab_options": [],
+    "detail": "16.0 GiB swap, detected RAM 8.0 GiB",
+    "encrypted": false,
+    "encryption_source": [],
+    "encryption_stable": null,
+    "filesystem": null,
+    "id": "/dev/mapper/swap0",
+    "kind": "partition",
+    "mapper_is_crypt": null,
+    "mapper_name": "swap0",
+    "parent_device": null,
+    "partuuid": null,
+    "path": "/dev/mapper/swap0",
+    "priority": -2,
+    "reasons": [
+      "Active /dev/mapper swap backing cannot be proven safe; automatic configuration is blocked",
+      "crypttab could not be parsed completely and mapper swap status is ambiguous",
+      "Mapper swap backing cannot be proven safe for resume"
+    ],
+    "removable": false,
+    "resume_offset": null,
+    "size_bytes": 17179869184,
+    "sparse": false,
+    "stable_resume_id": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "status": "blocked",
+    "title": "Swap partition /dev/mapper/swap0",
+    "used_bytes": 0,
+    "uuid": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "warnings": [
+      "Malformed crypttab line 1: too few fields"
+    ]
+  }
+]

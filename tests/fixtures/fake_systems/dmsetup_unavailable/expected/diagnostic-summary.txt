@@ -1,0 +1,5 @@
+fixture=dmsetup_unavailable
+targets=1
+recommended=none
+blockers=No existing active disk swap target is usable for hibernation
+classifications=unknown_mapper_swap

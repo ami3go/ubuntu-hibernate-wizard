@@ -1,0 +1,2 @@
+NAME TYPE SIZE USED PRIO
+/swap.img file 4294967296 0 -1

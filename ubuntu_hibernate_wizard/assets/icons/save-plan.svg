@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="save plan icon">
+<title>Save Plan</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+<rect x="6" y="6" width="52" height="52" rx="14" fill="#F8F8FB" stroke="#D7DBE2"/>
+<path d="M18 16h23l5 5v27H18z" fill="#fff" stroke="#2B2F38" stroke-width="3" stroke-linejoin="round"/>
+<path d="M24 16v13h15V16M24 47V36h16v11" fill="none" stroke="#2B2F38" stroke-width="3" stroke-linejoin="round"/>
+
+</svg>

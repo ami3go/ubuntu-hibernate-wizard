@@ -1,26 +1,35 @@
-# Rollback & Recovery
+---
+title: Rollback and recovery
+description: Understand Ubuntu Hibernate Wizard rollback metadata, managed files, safe restore rules, and conservative recovery behavior.
+---
 
-## Backups
-Before any change: `/var/backups/ubuntu-hibernate-wizard/<timestamp>/` with a `manifest.json` recording each file's original state (or that it did not exist).
+# Rollback and recovery
 
-## One-click rollback
-Available whenever an apply step fails, and from the menu afterwards. Files that existed are restored byte-for-byte; files the wizard created are removed; then `update-grub` and `update-initramfs` run again.
+Ubuntu Hibernate Wizard creates rollback metadata before writing managed files.
 
-## Manual restore
-```bash
-sudo cp /var/backups/ubuntu-hibernate-wizard/<ts>/grub /etc/default/grub
-sudo cp /var/backups/ubuntu-hibernate-wizard/<ts>/resume /etc/initramfs-tools/conf.d/resume
-sudo update-grub && sudo update-initramfs -u -k all
+Version 0.42.8 writes only:
+
+```text
+/etc/initramfs-tools/conf.d/resume
+/etc/default/grub.d/hibernate-wizard.cfg
 ```
 
-## Resize crash recovery
-Swap resize is journaled (`/var/lib/ubuntu-hibernate-wizard/resize-journal.json`). If the process is interrupted, the next start applies exactly one of these recoveries:
+Rollback restores or removes wizard-managed files only when the manifest and hashes prove the action is safe. The wizard does not delete pre-existing swap files or partitions.
 
-| Crash point | State on disk | Automatic recovery |
-|---|---|---|
-| While building | old swap intact | delete partial `.new`, restart resize |
-| After swapoff, before rename | old file intact | reactivate old swap |
-| After rename | new file complete | activate new file, continue |
-| Before reconfigure | new swap active | recompute offset, re-offer config |
+## Preview rollback
 
-At no point can both files be lost.
+```bash
+ubuntu-hibernate-wizard --list-rollbacks
+ubuntu-hibernate-wizard --preview-rollback 20260705-180000-a1b2c3
+```
+
+## Conservative behavior
+
+Rollback skips a file when:
+
+- the file was modified after the wizard wrote it;
+- the rollback manifest is incomplete;
+- the target path is not one of the managed files;
+- the hash comparison does not prove the action is safe.
+
+This avoids overwriting unrelated user changes.

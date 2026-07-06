@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="snapshot database icon">
+<title>Snapshot Database</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<ellipse cx="30" cy="17" rx="16" ry="7" fill="#8A4BD1" stroke="#6E35B4" stroke-width="3"/>
+<path d="M14 17v25c0 4 7 7 16 7s16-3 16-7V17" fill="#D9C9F4" stroke="#6E35B4" stroke-width="3"/>
+<path d="M14 29c0 4 7 7 16 7s16-3 16-7" fill="none" stroke="#6E35B4" stroke-width="3"/>
+<path d="M46 31l9 4v7c0 5.5-3.6 8.5-9 10-5.4-1.5-9-4.5-9-10v-7z" fill="#fff" stroke="#2FA84F" stroke-width="3"/>
+<path d="M42 42l3 3 7-8" fill="none" stroke="#2FA84F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+</svg>

@@ -1,0 +1,43 @@
+[
+  {
+    "active": true,
+    "backing_device": null,
+    "classification": "encrypted_random_key_swap",
+    "crypttab_name": "cryptswap",
+    "crypttab_options": [
+      "swap",
+      "cipher=aes-xts-plain64",
+      "size=256"
+    ],
+    "detail": "16.0 GiB swap, detected RAM 8.0 GiB",
+    "encrypted": true,
+    "encryption_source": [
+      "crypttab",
+      "dmsetup"
+    ],
+    "encryption_stable": false,
+    "filesystem": null,
+    "id": "/dev/mapper/cryptswap",
+    "kind": "partition",
+    "mapper_is_crypt": true,
+    "mapper_name": "cryptswap",
+    "parent_device": null,
+    "partuuid": null,
+    "path": "/dev/mapper/cryptswap",
+    "priority": -2,
+    "reasons": [
+      "Encrypted swap uses a random/swap crypttab configuration and cannot be used as an automatic resume target",
+      "Encrypted swap uses a random key/swap crypttab setup and cannot be used as a resume target"
+    ],
+    "removable": false,
+    "resume_offset": null,
+    "size_bytes": 17179869184,
+    "sparse": false,
+    "stable_resume_id": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "status": "blocked",
+    "title": "Swap partition /dev/mapper/cryptswap",
+    "used_bytes": 0,
+    "uuid": "d76e67b3-404f-461e-a961-7963664d66b3",
+    "warnings": []
+  }
+]

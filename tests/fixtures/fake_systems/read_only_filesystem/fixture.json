@@ -1,0 +1,6 @@
+{
+  "ram_bytes": 8589934592,
+  "bootloader": "grub",
+  "initramfs": "initramfs-tools",
+  "read_only_config": true
+}

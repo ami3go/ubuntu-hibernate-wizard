@@ -1,0 +1,2 @@
+NAME TYPE SIZE USED PRIO
+/dev/mapper/cryptswap partition 17179869184 0 -2

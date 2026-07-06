@@ -1,0 +1,3 @@
+[
+  "Configuration filesystem is marked read-only; automatic apply is blocked until writable /etc and boot configuration paths are available"
+]

@@ -1,0 +1,5 @@
+fixture=swapfile_ok
+targets=1
+recommended=/swap.img
+blockers=none
+classifications=plain_swapfile

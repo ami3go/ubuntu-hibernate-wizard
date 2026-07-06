@@ -1,30 +1,91 @@
+---
+title: Troubleshooting Ubuntu hibernation
+description: Fix common Ubuntu hibernation problems involving zram, swap size, resume UUID, resume_offset, GRUB, initramfs-tools, Secure Boot, and conflicting configuration.
+---
+
 # Troubleshooting
 
-Every wizard error carries a stable `error_code`. Find yours below.
+This page lists the most common reasons Ubuntu hibernation setup is blocked or fails to resume.
 
-## LOCKED
-Another wizard instance (or its helper) is running. Close it, or check `/run/ubuntu-hibernate-wizard.lock`.
+## zram only
 
-## NOT_IN_PLAN
-Internal safety stop: a mutation was requested that wasn't in the approved plan. Restart the wizard; report if it recurs.
+zram cannot survive power-off, so it cannot store the hibernation image. The wizard blocks zram as a hibernation target.
 
-## UNSUPPORTED_FS
-The swap file is not on ext4. Btrfs/others are not supported in v1.
+Fix: create and enable a persistent disk-backed swap partition or swap file manually, then rerun the wizard.
 
-## DD_FAILED
-Writing the swap file failed — usually disk full mid-write. The wizard cleaned up the partial file; free space and retry.
+## No active swap
 
-## NEW_SWAP_INVALID
-The freshly created swap file failed activation. Check `dmesg` for filesystem errors.
+v0.42 supports existing active swap targets and managed `/swap.img` create/resize. It does not repartition disks or reboot automatically.
 
-## SWAPON_FAILED
-The replaced swap file could not be activated. The resize journal preserves recovery state — reopen the wizard and follow the recovery prompt.
+Check:
 
-## UPDATE_GRUB_FAILED / UPDATE_INITRAMFS_FAILED
-`update-grub` or `update-initramfs` returned an error; full output is shown in the log expander. Common cause: `/boot` is nearly full — remove old kernels (`sudo apt autoremove`) and use **Repair**.
+```bash
+swapon --show --bytes
+```
 
-## Hibernate test failed (no error code)
-The system suspended or cold-booted instead of resuming. Check: Secure Boot enabled (kernel lockdown), swap smaller than used RAM, or graphics driver resume issues. Collect logs: `journalctl -b -1 | grep -iE "hibern|resume|pm:"`.
+## Swap smaller than RAM
 
-## Verification shows offset mismatch
-Expected after any swap resize outside the wizard. Press **Repair and Reboot** — it recalculates the offset and rewrites GRUB + initramfs.
+The selected target must be large enough to store the hibernation image. v0.42 blocks Apply when the selected target is smaller than RAM.
+
+## Swap file without reliable offset
+
+For a swap file, the kernel needs `resume_offset`. On ext4, the wizard uses `filefrag`. On btrfs, it accepts only the value returned by:
+
+```bash
+sudo btrfs inspect-internal map-swapfile -r /swap.img
+```
+
+If the offset cannot be trusted, Apply is blocked.
+
+## Non-GRUB system
+
+v0.42 supports GRUB + initramfs-tools only. systemd-boot, dracut, UKI, and custom boot stacks are out of scope.
+
+Check:
+
+```bash
+command -v update-grub
+command -v update-initramfs
+```
+
+## Conflicting resume parameters
+
+Existing `resume=`, `resume_offset=`, or `RESUME=` values that point to a different target can cause cold boot instead of resume.
+
+The wizard blocks Apply until the conflict is reviewed. It must not create duplicate resume parameters.
+
+## Secure Boot or kernel lockdown
+
+Secure Boot and kernel lockdown can prevent hibernation on some systems. The wizard detects and warns, but it does not change Secure Boot settings.
+
+## System hibernates but cold-boots instead of resuming
+
+Check these values after reboot:
+
+```bash
+cat /proc/cmdline
+cat /etc/initramfs-tools/conf.d/resume
+swapon --show --bytes
+```
+
+Common causes:
+
+- stale `resume=UUID=...` value;
+- wrong swap-file `resume_offset`;
+- initramfs not regenerated after configuration changes;
+- GRUB not regenerated after kernel parameter changes;
+- encrypted storage not available early enough in boot.
+
+## Need support
+
+Use the GUI **Export Diagnostic Report** action where available, or collect:
+
+```bash
+ubuntu-hibernate-wizard --verify
+swapon --show --bytes
+cat /proc/cmdline
+cat /etc/initramfs-tools/conf.d/resume
+cat /etc/default/grub.d/hibernate-wizard.cfg
+```
+
+Do not paste unrelated full `/etc/fstab` or private host/user names unless needed.

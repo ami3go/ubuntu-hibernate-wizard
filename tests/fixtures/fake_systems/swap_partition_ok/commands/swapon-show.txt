@@ -1,0 +1,2 @@
+NAME TYPE SIZE USED PRIO
+/dev/nvme0n1p3 partition 17179869184 0 -2

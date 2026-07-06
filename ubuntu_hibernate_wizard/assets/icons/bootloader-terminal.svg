@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="bootloader terminal icon">
+<title>Bootloader Terminal</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+
+<rect x="10" y="17" width="44" height="33" rx="5" fill="#2B2F38" stroke="#5F6673" stroke-width="3"/>
+<path d="M18 28l7 6-7 6M30 40h14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15 52h34" stroke="#5F6673" stroke-width="4" stroke-linecap="round"/>
+
+</svg>

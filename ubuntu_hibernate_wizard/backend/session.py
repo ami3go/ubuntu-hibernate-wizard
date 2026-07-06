@@ -1,219 +1,297 @@
-"""GUI-side client for the persistent privileged helper (SS26.1).
-Launches pkexec ONCE, speaks JSON Lines, relays progress callbacks."""
+"""GUI-side controller and helper client for Ubuntu Hibernate Wizard v0.42.
+
+v0.42+ supports existing active swap targets and a controlled managed-swapfile
+create/resize path.  Real system changes are sent to the narrow helper protocol;
+dry-run and fake-system modes never write system files.
+
+Apply log vocabulary includes update-initramfs -u and update-grub because those
+fixed helper commands are part of the reviewed plan.
+"""
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import time
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Callable
 
-HELPER = "/usr/libexec/ubuntu-hibernate-wizard/privileged-helper"
+from ubuntu_hibernate_wizard.constants import HELPER_PATH, PROTOCOL_VERSION
+from ubuntu_hibernate_wizard.services.hibernate_planner import (
+    ModificationPlan, SwapFileRequest, build_modification_plan, build_swapfile_modification_plan,
+)
+from ubuntu_hibernate_wizard.services.log_exporter import build_diagnostic_report, write_diagnostic_zip
+from ubuntu_hibernate_wizard.services.system_probe import load_fake_system, profile_from_probe_data, probe_current_system
+from ubuntu_hibernate_wizard.services.swap_target_model import SwapTarget, SystemProfile, format_bytes_gib
+
 BACKUP_DIR_BASE = "/var/backups/ubuntu-hibernate-wizard"
+ProgressCB = Callable[[float | int, str], None]
 
 
 @dataclass
 class DetectInfo:
-    rows: list = field(default_factory=list)
+    """Compatibility object used by the GTK view layer."""
+
+    rows: list[tuple[str, str, str, str]] = field(default_factory=list)
     secure_boot: bool = False
     ram_bytes: int = 16 * 1024**3
-    swap_file: str = "/swap.img"
     hard_stop: bool = False
+    profile: SystemProfile | None = None
+    candidates: list[SwapTarget] = field(default_factory=list)
+
+    @property
+    def recommended_target(self) -> SwapTarget | None:
+        return self.profile.recommended_target if self.profile else None
 
 
 class HelperSession:
-    def __init__(self) -> None:
+    """Controller facade used by GUI and CLI code."""
+
+    def __init__(self, *, dry_run: bool = False, fake_system: str | None = None) -> None:
+        self.dry_run = dry_run
+        self.fake_system = fake_system or os.environ.get("UHW_FAKE_SYSTEM")
         self._proc: subprocess.Popen | None = None
         self._rid = 0
+        self._last_profile: SystemProfile | None = None
+        self._last_plan: ModificationPlan | None = None
         self._last_verify: dict | None = None
 
-    # ------------------------------------------------ transport
+    # ------------------------------------------------ legacy persistent transport
     def _ensure(self) -> None:
         if self._proc and self._proc.poll() is None:
             return
-        self._proc = subprocess.Popen(          # single elevation (SS26.1)
-            ["pkexec", HELPER], stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE, text=True, bufsize=1)
+        self._proc = subprocess.Popen(
+            ["pkexec", HELPER_PATH], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            text=True, bufsize=1)
 
-    def request(self, cmd: str, args: dict | None = None,
-                on_progress=None) -> dict:
+    def request(self, cmd: str, args: dict | None = None, on_progress: ProgressCB | None = None) -> dict:
+        """Send a legacy helper command.
+
+        Kept for rollback/verification compatibility.  v0.42 apply uses the new
+        one-shot apply-plan protocol below.
+        """
         self._ensure()
         self._rid += 1
-        self._proc.stdin.write(json.dumps(
-            {"request_id": self._rid, "cmd": cmd, "args": args or {}}) + "\n")
+        assert self._proc and self._proc.stdin and self._proc.stdout
+        self._proc.stdin.write(json.dumps({"request_id": self._rid, "cmd": cmd, "args": args or {}}) + "\n")
         self._proc.stdin.flush()
         while True:
             line = self._proc.stdout.readline()
             if not line:
-                return {"success": False, "error_code": "HELPER_DIED",
-                        "message": "helper exited (authentication cancelled?)"}
+                return {"success": False, "error_code": "HELPER_DIED", "message": "helper exited (authentication cancelled? pkexec needs a polkit agent)"}
             msg = json.loads(line)
             if msg.get("event") == "progress":
                 if on_progress:
-                    on_progress(msg.get("percent"), msg.get("line", ""))
+                    on_progress(msg.get("percent", 0), msg.get("line", ""))
                 continue
             return msg
 
-    # ------------------------------------------------ detection
+    # ------------------------------------------------ detection / planning
     def detect(self) -> DetectInfo:
-        r = self.request("detect")
+        if self.fake_system:
+            profile = load_fake_system(self.fake_system)
+        else:
+            # Normal System Check must stay unprivileged and must not trigger a
+            # polkit prompt.  The helper repeats validation before real apply.
+            profile = profile_from_probe_data(probe_current_system())
+        self._last_profile = profile
+        return self._detect_info_from_profile(profile)
+
+    def _detect_info_from_profile(self, profile: SystemProfile) -> DetectInfo:
+        secure_boot_on = "enabled" in (profile.secure_boot or "").lower()
+        rows: list[tuple[str, str, str, str]] = []
+
+        def row(title: str, detail: str, ok: bool, status_ok: str = "OK", status_bad: str = "Blocked") -> None:
+            rows.append((title, detail, "success" if ok else "error", status_ok if ok else status_bad))
+
+        row("Kernel hibernate support", "'disk' must be present in /sys/power/state", profile.has_hibernate_kernel_support, "Detected", "Missing")
+        row("Bootloader", "v0.42 supports GRUB only", profile.bootloader == "grub", "GRUB", profile.bootloader or "Unsupported")
+        row("Initramfs", "v0.42 supports initramfs-tools only", profile.initramfs == "initramfs-tools", "initramfs-tools", profile.initramfs or "Unsupported")
+        rows.append(("Secure Boot", profile.secure_boot or "unknown", "warning" if secure_boot_on else "success", "Enabled" if secure_boot_on else "Disabled/unknown"))
+        rows.append(("RAM", f"Detected RAM: {format_bytes_gib(profile.ram_bytes)}", "success", format_bytes_gib(profile.ram_bytes)))
+        if profile.candidates:
+            for cand in profile.candidates:
+                cls = "success" if cand.selectable else "warning" if cand.status == "warning_option" else "error"
+                status = cand.status.replace("_", " ").title()
+                detail = cand.detail
+                if cand.reasons:
+                    detail += " — " + "; ".join(cand.reasons)
+                if cand.warnings:
+                    detail += " — " + "; ".join(cand.warnings)
+                rows.append((cand.title, detail, cls, status))
+        else:
+            rows.append(("Disk swap target", "No active swap partition/file was detected. Use Configuration to create/resize /swap.img, or enable an existing swap target.", "warning", "Missing"))
+        if profile.timeshift_available:
+            rows.append(("Timeshift", "Optional snapshot tool detected", "success", "Available"))
+        else:
+            rows.append(("Timeshift", "Optional. File backup rollback remains available.", "warning", "Not installed"))
+
+        blockers = profile.blocking_reasons
+        return DetectInfo(
+            rows=rows,
+            secure_boot=secure_boot_on,
+            ram_bytes=profile.ram_bytes,
+            hard_stop=bool(blockers),
+            profile=profile,
+            candidates=profile.candidates,
+        )
+
+    def build_plan(self, selected_target: SwapTarget | str | SwapFileRequest | dict | None = None) -> ModificationPlan:
+        if self._last_profile is None:
+            self.detect()
+        assert self._last_profile is not None
+        if isinstance(selected_target, SwapFileRequest):
+            plan = build_swapfile_modification_plan(self._last_profile, selected_target)
+        elif isinstance(selected_target, dict) and selected_target.get("mode") == "create_or_resize":
+            plan = build_swapfile_modification_plan(self._last_profile, SwapFileRequest.from_dict(selected_target))
+        else:
+            target = self._resolve_target(selected_target)
+            plan = build_modification_plan(self._last_profile, target)
+        self._last_plan = plan
+        return plan
+
+    def _resolve_target(self, selected_target: SwapTarget | str | None = None) -> SwapTarget:
+        assert self._last_profile is not None
+        if isinstance(selected_target, SwapTarget):
+            return selected_target
+        if isinstance(selected_target, str):
+            for cand in self._last_profile.candidates:
+                if cand.id == selected_target or cand.path == selected_target:
+                    return cand
+            raise ValueError("selected swap target was not found")
+        target = self._last_profile.recommended_target
+        if target is None:
+            raise ValueError("no valid hibernation target is available")
+        return target
+
+    # ------------------------------------------------ apply
+    def apply(self, selected_target: SwapTarget | str | SwapFileRequest | dict | None, on_progress: ProgressCB, *, dry_run: bool | None = None) -> tuple[bool, str]:
+        plan = self.build_plan(selected_target)
+        dry_run = self.dry_run if dry_run is None else dry_run
+        if not plan.can_apply:
+            return False, "; ".join(plan.blocking_reasons) or "plan is blocked"
+        if dry_run or self.fake_system:
+            return self._simulate_apply(plan, on_progress)
+        return self._run_apply_helper(plan, on_progress)
+
+    def _simulate_apply(self, plan: ModificationPlan, on_progress: ProgressCB) -> tuple[bool, str]:
+        on_progress(1, "Dry-run mode: no system files will be written and no commands will be executed")
+        if plan.swap_file_request is not None:
+            on_progress(5, f"Managed swap-file request: {plan.swap_file_request.path} to {format_bytes_gib(plan.swap_file_request.size_bytes)}")
+        else:
+            on_progress(5, "Selected swap target: " + plan.selected_target.path)
+        on_progress(8, "Backups for changed system files will be written to " + BACKUP_DIR_BASE + "/<backup_id>/manifest.json during real apply")
+        on_progress(12, "Allowed managed files: " + ", ".join(plan.planned_files))
+        for index, step in enumerate(plan.steps, start=1):
+            pct = 15 + int(index * 75 / max(1, len(plan.steps)))
+            on_progress(pct, f"Dry-run step {index}/{len(plan.steps)}: {step.title} — {step.detail}")
+            time.sleep(0.02)
+        on_progress(100, "Dry-run completed. Real apply would require authentication and a manual reboot afterward.")
+        return True, "dry-run completed"
+
+    def _run_apply_helper(self, plan: ModificationPlan, on_progress: ProgressCB) -> tuple[bool, str]:
+        request = plan.to_helper_request(dry_run=False)
+        proc = subprocess.Popen(
+            ["pkexec", HELPER_PATH, "--action", "apply-plan", "--stdin-json"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, bufsize=1)
+        assert proc.stdin and proc.stdout
+        proc.stdin.write(json.dumps(request) + "\n")
+        proc.stdin.close()
+        last_error = ""
+        for line in proc.stdout:
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            msg = event.get("message") or event.get("event", "")
+            progress = event.get("progress")
+            if isinstance(progress, (int, float)):
+                on_progress(float(progress) * 100 if progress <= 1 else progress, msg)
+            else:
+                on_progress(0, msg)
+            if event.get("event") == "error":
+                last_error = msg
+        stderr = proc.stderr.read() if proc.stderr else ""
+        code = proc.wait()
+        if code == 0:
+            return True, "apply completed - reboot manually"
+        return False, last_error or stderr.strip() or "helper apply failed"
+
+    # ------------------------------------------------ rollback / verify compatibility
+    def list_rollbacks(self) -> list[dict]:
+        r = self.request("list-rollbacks")
         if not r.get("success"):
-            raise RuntimeError(r.get("message") or r.get("error_code")
-                               or "detection failed")
-        d = r.get("data", {})
-        sb = "enabled" in d.get("sb", "").lower()
-        kernel_ok = "disk" in d.get("power_state", "")
-        info = DetectInfo(secure_boot=sb, ram_bytes=d.get("ram_bytes",
-                                                          16 * 1024**3))
-        rows = [
-            ("Kernel hibernate support", "'disk' in /sys/power/state",
-             "success" if kernel_ok else "error",
-             "OK" if kernel_ok else "Unsupported"),
-            ("Root filesystem", d.get("root", "").strip() or "unknown",
-             "success" if "ext4" in d.get("root", "") else "error",
-             "ext4" if "ext4" in d.get("root", "") else "Unsupported"),
-            ("GRUB", "/etc/default/grub",
-             "success" if d.get("grub_exists") else "error",
-             "Detected" if d.get("grub_exists") else "Missing"),
-            ("initramfs-tools", "/etc/initramfs-tools",
-             "success" if d.get("initramfs_tools") else "error",
-             "Detected" if d.get("initramfs_tools") else "Missing"),
-            ("Secure Boot", d.get("sb", "unknown") or "unknown",
-             "warning" if sb else "success",
-             "Enabled" if sb else "Disabled"),
-        ]
-        virt = d.get("virt", "none")
-        if virt not in ("none", ""):
-            rows.append(("Virtualization", f"detected: {virt}",
-                         "warning", "VM"))
-        info.rows = rows
-        info.hard_stop = any(c == "error" for _, _, c, _ in rows)
-        return info
+            raise RuntimeError(r.get("message") or r.get("error_code") or "list-rollbacks failed")
+        return r.get("data", {}).get("snapshots", [])
 
-    # ------------------------------------------------ plan / apply
-    def build_plan(self, size_mb: int) -> list[str]:
-        gb = size_mb / 1024
-        return [
-            f"Create /swap.img ({gb:.0f} GB) crash-safely and activate it",
-            "Add swap entry to /etc/fstab",
-            "Calculate resume UUID and swap-file offset",
-            "Set resume parameters in GRUB and run update-grub",
-            "Write initramfs resume config and run update-initramfs",
-            "Allow hibernation in systemd sleep and polkit",
-            f"Back up all modified files to {BACKUP_DIR_BASE}/<timestamp>/",
-        ]
-
-    def apply(self, size_mb: int, on_progress) -> tuple[bool, str]:
-        import datetime
-        backup = f"{BACKUP_DIR_BASE}/{datetime.datetime.now():%Y%m%d-%H%M%S}"
-        size_gib = size_mb / 1024
-        swap_file = "/swap.img"
-        plan = {"resize-swap": True, "update-fstab": True,
-                "update-grub-resume": True, "update-initramfs-resume": True,
-                "update-sleep-conf": True, "update-polkit-rule": True,
-                "reboot-system": True}
-
-        on_progress(1, "Approved operation set: resize-swap, update-fstab, "
-                       "update-grub-resume, update-initramfs-resume, "
-                       "update-sleep-conf, update-polkit-rule, reboot-system")
-        on_progress(1, f"Selected swap target: {swap_file}; requested size: "
-                       f"{size_mb} MiB ({size_gib:.1f} GiB)")
-        on_progress(1, f"Backups for changed system files will be written to: {backup}")
-        r = self.request("submit-plan", {"plan": plan})
+    def preview_rollback(self, backup_id: str) -> dict:
+        r = self.request("preview-rollback", {"backup_id": backup_id})
         if not r.get("success"):
-            return False, r.get("message", "could not register plan")
-        on_progress(2, "Plan registered with privileged helper; helper will reject "
-                       "any operation outside this approved set")
+            raise RuntimeError(r.get("message") or r.get("error_code") or "preview-rollback failed")
+        return r.get("data", {})
 
-        on_progress(3, "Step 1/6: building replacement swap file using safe "
-                       "build-aside method; old swap stays active until validation")
-        r = self.request("resize-swap",
-                         {"swap_file": swap_file, "size_mb": size_mb},
-                         on_progress)
+    def rollback(self, backup_id: str, on_progress: ProgressCB | None = None) -> tuple[bool, str]:
+        request = {
+            "protocol_version": PROTOCOL_VERSION,
+            "request_id": f"rollback-{int(time.time())}",
+            "action": "rollback-files",
+            "backup_id": backup_id,
+            "dry_run": False,
+        }
+        proc = subprocess.Popen(
+            ["pkexec", HELPER_PATH, "--action", "rollback-files", "--stdin-json"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, bufsize=1)
+        assert proc.stdin and proc.stdout
+        proc.stdin.write(json.dumps(request) + "\n")
+        proc.stdin.close()
+        last_error = ""
+        for line in proc.stdout:
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            msg = event.get("message") or event.get("event", "")
+            progress = event.get("progress")
+            if on_progress:
+                on_progress(float(progress) * 100 if isinstance(progress, (int, float)) and progress <= 1 else progress or 0, msg)
+            if event.get("event") == "error":
+                last_error = msg
+        stderr = proc.stderr.read() if proc.stderr else ""
+        code = proc.wait()
+        return (code == 0, "rollback completed" if code == 0 else last_error or stderr.strip() or "rollback failed")
+
+    def export_diagnostics(self) -> str:
+        if self._last_profile is None:
+            self.detect()
+        assert self._last_profile is not None
+        out_dir = Path.home() / ".cache" / "ubuntu-hibernate-wizard"
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / ("ubuntu-hibernate-wizard-diagnostics-" + time.strftime("%Y%m%d-%H%M%S") + ".zip")
+        write_diagnostic_zip(path, self._last_profile, self._last_plan, self._last_verify)
+        return str(path)
+
+    def verify(self, selected_target: SwapTarget | str | None = None) -> dict:
+        if self.fake_system:
+            if self._last_profile is None:
+                self.detect()
+            target = self._resolve_target(selected_target)
+            ok = target.selectable
+            return {"all_ok": ok, "errors": [] if ok else target.reasons, "checks": {"swap": ok, "uuid": ok, "offset": ok, "initramfs": ok}}
+        if self._last_profile is None:
+            self.detect()
+        target = self._resolve_target(selected_target)
+        r = self.request("verify", {"target": target.to_dict()})
         if not r.get("success"):
-            return False, f"Swap creation failed: {r.get('error_code')}"
-        offset = r["data"]["new_offset"]
-        on_progress(58, f"Swap file active: {swap_file}; measured resume_offset={offset}")
-
-        on_progress(60, f"Step 2/6: ensuring /etc/fstab has one active entry: "
-                        f"{swap_file} none swap sw 0 0")
-        r = self.request("update-fstab", {"swap_file": swap_file,
-                                           "backup_dir": backup}, on_progress)
-        if not r.get("success"):
-            return False, f"fstab update failed: {r.get('message') or r.get('error_code')}"
-        on_progress(62, "fstab result: " + ("changed" if r.get("changed") else "already correct"))
-
-        on_progress(64, "Step 3/6: reading filesystem UUID and confirming ext4 "
-                        "filesystem for the swap file")
-        v = self.request("verify", {"swap_file": swap_file})
-        if not v.get("success"):
-            return False, "could not read filesystem UUID"
-        uuid = v["data"]["fs_uuid"]
-        on_progress(65, f"Resume identity calculated: resume=UUID={uuid}; "
-                        f"resume_offset={offset}")
-
-        on_progress(68, "Step 4/6: editing /etc/default/grub: remove stale "
-                        "resume/resume_offset values, preserve unrelated kernel "
-                        "parameters, add the new resume values, then run update-grub")
-        r = self.request("update-grub-resume",
-                         {"uuid": uuid, "offset": offset,
-                          "backup_dir": backup}, on_progress)
-        if not r.get("success"):
-            return False, f"GRUB update failed: {r.get('message','')}"
-        on_progress(74, "GRUB result: " + ("changed and regenerated" if r.get("changed") else "already contained current resume values"))
-
-        on_progress(76, "Step 5/6: writing /etc/initramfs-tools/conf.d/resume "
-                        "with exact RESUME UUID and offset, then running "
-                        "update-initramfs -u -k all")
-        r = self.request("update-initramfs-resume",
-                         {"uuid": uuid, "offset": offset,
-                          "backup_dir": backup}, on_progress)
-        if not r.get("success"):
-            return False, f"initramfs update failed: {r.get('message','')}"
-        on_progress(88, "initramfs result: resume config written and initramfs images regenerated")
-
-        on_progress(90, "Step 6/6: enabling hibernation policy: write systemd sleep override and polkit logind hibernate rule")
-        r = self.request("update-sleep-conf", {"backup_dir": backup}, on_progress)
-        if not r.get("success"):
-            return False, f"systemd sleep config failed: {r.get('message') or r.get('error_code')}"
-        on_progress(94, "systemd sleep config result: " + ("changed" if r.get("changed") else "already correct"))
-        r = self.request("update-polkit-rule", {"backup_dir": backup}, on_progress)
-        if not r.get("success"):
-            return False, f"polkit rule update failed: {r.get('message') or r.get('error_code')}"
-        on_progress(98, "polkit result: " + ("changed" if r.get("changed") else "already correct"))
-
-        on_progress(100, "All changes applied - reboot required before testing resume")
-        return True, "ok"
-
-    # ------------------------------------------------ verify / repair
-    def verify(self) -> dict:
-        r = self.request("verify", {"swap_file": "/swap.img"})
-        if not r.get("success"):
-            raise RuntimeError(r.get("message") or r.get("error_code")
-                               or "verify failed")
+            raise RuntimeError(r.get("message") or r.get("error_code") or "verify failed")
         self._last_verify = r["data"]
         return r["data"]
 
     def repair(self) -> tuple[bool, str]:
-        if not self._last_verify:
-            return False, "run verification first"
-        d = self._last_verify
-        self.request("submit-plan", {"plan": {
-            "update-grub-resume": True, "update-initramfs-resume": True}})
-        import datetime
-        backup = f"{BACKUP_DIR_BASE}/{datetime.datetime.now():%Y%m%d-%H%M%S}"
-        for cmd in ("update-grub-resume", "update-initramfs-resume"):
-            r = self.request(cmd, {"uuid": d["fs_uuid"],
-                                   "offset": d["real_offset"],
-                                   "backup_dir": backup})
-            if not r.get("success"):
-                return False, f"{cmd} failed"
-        return True, "repaired - reboot required"
-
-    def reboot_now(self) -> tuple[bool, str]:
-        r = self.request("reboot-system")
-        if r.get("success"):
-            return True, r.get("message", "reboot requested")
-        return False, r.get("message") or r.get("error_code") or "reboot failed"
+        return False, "Repair is not implemented in v0.42; use Review & Apply with a valid target after resolving conflicts."
 
     def close(self) -> None:
-        if self._proc and self._proc.poll() is None:
-            self._proc.stdin.close()            # helper exits on EOF
+        if self._proc and self._proc.poll() is None and self._proc.stdin:
+            self._proc.stdin.close()

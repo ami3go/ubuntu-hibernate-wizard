@@ -1,0 +1,5 @@
+fixture=swap_partition_ok
+targets=1
+recommended=/dev/nvme0n1p3
+blockers=none
+classifications=plain_swap_partition

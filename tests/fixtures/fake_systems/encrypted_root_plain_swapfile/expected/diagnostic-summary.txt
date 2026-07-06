@@ -1,0 +1,5 @@
+fixture=encrypted_root_plain_swapfile
+targets=1
+recommended=/swap.img
+blockers=none
+classifications=swapfile_on_encrypted_root

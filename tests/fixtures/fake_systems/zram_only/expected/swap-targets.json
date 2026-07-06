@@ -1,0 +1,35 @@
+[
+  {
+    "active": true,
+    "backing_device": null,
+    "classification": "zram",
+    "crypttab_name": null,
+    "crypttab_options": [],
+    "detail": "16.0 GiB swap, detected RAM 8.0 GiB",
+    "encrypted": false,
+    "encryption_source": [],
+    "encryption_stable": null,
+    "filesystem": null,
+    "id": "/dev/zram0",
+    "kind": "zram",
+    "mapper_is_crypt": null,
+    "mapper_name": null,
+    "parent_device": null,
+    "partuuid": null,
+    "path": "/dev/zram0",
+    "priority": 100,
+    "reasons": [
+      "zram is volatile RAM compression and cannot store a hibernation image across power-off"
+    ],
+    "removable": false,
+    "resume_offset": null,
+    "size_bytes": 17179869184,
+    "sparse": false,
+    "stable_resume_id": null,
+    "status": "blocked",
+    "title": "zram swap /dev/zram0",
+    "used_bytes": 0,
+    "uuid": null,
+    "warnings": []
+  }
+]

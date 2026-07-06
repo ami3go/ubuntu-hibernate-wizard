@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="power off icon">
+<title>Power Off</title>
+<desc>Original Ubuntu Hibernate Wizard project icon made from simple vector primitives; no third-party icon set or trademarked logo.</desc>
+
+<circle cx="32" cy="32" r="24" fill="#2B2F38"/>
+<path d="M32 15v19" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+<path d="M22 22a17 17 0 1 0 20 0" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+
+</svg>

@@ -1,0 +1,7 @@
+{
+  "ram_bytes": 8589934592,
+  "bootloader": "grub",
+  "initramfs": "initramfs-tools",
+  "distro": "ubuntu",
+  "distro_version": "Ubuntu fixture"
+}

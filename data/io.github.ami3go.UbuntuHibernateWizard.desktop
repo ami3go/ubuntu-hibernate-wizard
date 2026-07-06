@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Ubuntu Hibernate Wizard
+Comment=Enable, repair, verify, and rollback Ubuntu hibernation
+Exec=ubuntu-hibernate-wizard
+Icon=io.github.ami3go.UbuntuHibernateWizard
+Terminal=false
+Type=Application
+Categories=System;Settings;
+Keywords=hibernate;hibernation;suspend;swap;resume;resume_offset;grub;initramfs;ubuntu;rollback;

@@ -1,0 +1,1 @@
+cryptswap CRYPT-LUKS1-abc dm-0
