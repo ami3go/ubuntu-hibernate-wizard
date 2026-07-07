@@ -15,9 +15,26 @@
   <a href="https://ami3go.github.io/ubuntu-hibernate-wizard/troubleshooting/">Troubleshooting</a>
 </p>
 
-> **Current status:** v0.42.12 is a developer/test release with restored managed /swap.img sizing controls. Gate D has passed, Gate E/F tooling exists, but real disposable-VM hibernate/resume validation is still required before public real-apply release.
+> **Current status:** 0.4.3 RC4 is a real-system-tested release candidate. The screenshots below are captured from the application running on a real Ubuntu system.
 
-![Ubuntu Hibernate Wizard GTK4 menu screenshots](docs/assets/screenshots/menu/00_contact_sheet_all_menu_steps.png)
+![Ubuntu Hibernate Wizard real GTK4 screenshots](docs/assets/screenshots/menu/00_contact_sheet_all_menu_steps.png)
+
+<p align="center"><em>Real screenshots from Ubuntu Hibernate Wizard 0.4.3 RC4.</em></p>
+
+## Real application screenshots
+
+| Introduction | System Check |
+|---|---|
+| ![Introduction screen](docs/assets/screenshots/menu/01_introduction.png) | ![System Check screen](docs/assets/screenshots/menu/02_system_check.png) |
+
+| Configuration | Planned Modifications |
+|---|---|
+| ![Configuration screen](docs/assets/screenshots/menu/03_configuration.png) | ![Planned Modifications screen](docs/assets/screenshots/menu/04_planned_modifications.png) |
+
+| Review & Apply | Finish |
+|---|---|
+| ![Review and Apply screen](docs/assets/screenshots/menu/05_review_apply.png) | ![Finish screen](docs/assets/screenshots/menu/06_finish.png) |
+
 
 ## Why this exists
 

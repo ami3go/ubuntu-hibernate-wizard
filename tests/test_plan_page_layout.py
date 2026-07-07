@@ -22,6 +22,7 @@ def test_plan_renderer_uses_status_changes_and_collapsed_details() -> None:
     render_helpers = source.split("def _compact_status_table", 1)[1].split("def _format_plan_target_detail", 1)[0]
     assert "_plan_add_status_summary" in render_helpers
     assert "_plan_add_short_changes" in render_helpers
+    assert "_compact_planned_changes_table" in render_helpers
     assert "_plan_add_technical_details" in render_helpers
     assert "_plan_add_safety_checklist" not in render_helpers
     assert "Resume UUID" in render_helpers
@@ -35,3 +36,12 @@ def test_status_summary_uses_table_layout() -> None:
     assert "compact_status_table" in source
     assert "Field" in source
     assert "Value" in source
+
+
+def test_planned_changes_uses_table_layout() -> None:
+    source = Path("ubuntu_hibernate_wizard/ui/wizard_window.py").read_text(encoding="utf-8")
+    assert "def _compact_planned_changes_table" in source
+    assert "compact_planned_changes_table" in source
+    assert 'headers = ["#", "Action", "Type"]' in source
+    assert "grid.attach(number" in source
+    assert "_status_pill(status, kind)" in source

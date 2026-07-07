@@ -1,5 +1,5 @@
 PKG      := ubuntu-hibernate-wizard
-VERSION  := 0.4.3~rc1-1
+VERSION  := 0.4.3~rc4-1
 DEST     := dist/pkgroot
 
 .PHONY: test resources deb clean

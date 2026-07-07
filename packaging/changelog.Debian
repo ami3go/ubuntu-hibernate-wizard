@@ -1,4 +1,4 @@
-ubuntu-hibernate-wizard (0.4.3~rc1-1) unstable; urgency=medium
+ubuntu-hibernate-wizard (0.4.3~rc4-1) unstable; urgency=medium
 
   * Fix the left sidebar Review & Apply step appearing without visible text
     by replacing ActionRow title-dependent navigation with explicit GTK labels.

@@ -5,7 +5,7 @@ description: GTK4 Ubuntu Hibernate Wizard screenshots, planned modification exam
 
 # Screenshots and examples
 
-These screenshots show the v0.42 GTK4/libadwaita workflow: check the system, choose an **existing active** swap partition/file, review managed file changes, apply through the helper, and reboot manually.
+These real screenshots show the Ubuntu Hibernate Wizard 0.4.3 RC4 GTK4/libadwaita workflow running on an Ubuntu desktop: check the system, choose an existing swap target or managed `/swap.img`, review managed file changes, apply through the helper, and reboot manually.
 
 ## Complete menu overview
 
@@ -13,7 +13,7 @@ These screenshots show the v0.42 GTK4/libadwaita workflow: check the system, cho
 
 ## Introduction
 
-The start page explains the conservative v0.42 scope: existing valid swap targets only, no swap creation/resizing, no storage changes, and no automatic reboot.
+The start page explains the release-candidate scope and shows the application banner and main wizard capabilities.
 
 ![Ubuntu Hibernate Wizard introduction screen](assets/screenshots/menu/01_introduction.png)
 
@@ -25,13 +25,13 @@ System Check probes the host without starting a privileged helper. It checks act
 
 ## Configuration
 
-The Configuration page lists existing active swap targets and explains why each target is recommended, valid, warned, or blocked.
+The Configuration page lists existing active swap targets and can also prepare a managed `/swap.img` using RAM-based presets or manual size input.
 
 ![Ubuntu Hibernate Wizard configuration screen](assets/screenshots/menu/03_configuration.png)
 
 ## Planned modifications
 
-The plan lists the exact managed files and commands before authentication.
+The plan shows a compact status table, compact planned-change table, and expandable technical details before authentication.
 
 ![Ubuntu Hibernate Wizard planned modifications screen](assets/screenshots/menu/04_planned_modifications.png)
 
@@ -64,7 +64,7 @@ Example dry-run excerpt:
 
 ## Finish
 
-The Finish page tells the user to reboot manually and suggests optional GNOME hibernate menu extensions after the operating-system side works.
+The Finish page tells the user to reboot manually, provides read-only post-restart verification with a live status window, and offers optional GNOME hibernate menu extension links.
 
 ![Ubuntu Hibernate Wizard finish screen](assets/screenshots/menu/06_finish.png)
 

@@ -59,6 +59,7 @@ nav:
   - Install: installation.md
   - Use: usage.md
   - Screenshots: screenshots-and-examples.md
+  - Real Screenshots: real-screenshots.md
   - Hibernation Concepts: how-hibernation-works.md
   - Troubleshooting: troubleshooting.md
   - Rollback: rollback-and-recovery.md
@@ -69,6 +70,7 @@ nav:
   - FAQ: faq.md
   - GitHub Pages: github-pages.md
   - Release Notes:
+      - 0.4.3 RC4: release-0.4.3-rc4.md
       - v0.42.1 Hardening: v0421-hardening-notes.md
       - v0.42.5 Code Cleanup: v0425-code-review-cleanup-notes.md
       - v0.42.8 Docs Refresh: v0426-docs-seo-refresh-notes.md

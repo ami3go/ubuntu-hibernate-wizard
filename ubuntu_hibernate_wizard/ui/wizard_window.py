@@ -871,16 +871,144 @@ class WizardWindow(Adw.ApplicationWindow):
     def _plan_add_status_summary(self) -> None:
         self._plan_status_group.append(self._compact_status_table(self._plan_status_items(), pairs_per_row=2))
 
-    def _plan_add_short_changes(self) -> None:
+    def _plan_step_badge(self, step) -> tuple[str, str]:
+        if step.id == "create_rollback":
+            return "Backup", "success"
+        if step.id == "validate_target":
+            return "Check", "success"
+        if step.id.startswith("update_"):
+            return "Command", "warning"
+        if step.id == "ensure_swap_file":
+            return "Disk", "warning"
+        if step.id.startswith("write_"):
+            return "Write", "warning"
+        return "Step", "neutral"
+
+    def _compact_planned_changes_table(self) -> Gtk.Grid:
+        grid = Gtk.Grid(column_spacing=12, row_spacing=5, hexpand=True)
+        grid.set_name("compact_planned_changes_table")
+        grid.add_css_class("uhw-status-table")
+
+        headers = ["#", "Action", "Type"]
+        for col, header in enumerate(headers):
+            label = Gtk.Label(label=header, xalign=0)
+            label.add_css_class("caption")
+            label.add_css_class("dim-label")
+            grid.attach(label, col, 0, 1, 1)
+
         if self.plan is None:
-            self._plan_changes_group.append(self._row_card("No plan", "Nothing to apply.", "warning"))
-            return
+            grid.attach(self._label("—", css="dim-label"), 0, 1, 1, 1)
+            grid.attach(self._label("No plan available.", css="dim-label"), 1, 1, 1, 1)
+            grid.attach(self._status_pill("Missing", "warning"), 2, 1, 1, 1)
+            return grid
+
         for idx, step in enumerate(self.plan.steps, start=1):
-            short = step.title
-            if len(short) > 74:
-                short = short[:71].rstrip() + "..."
-            icon = "rollback-snapshot" if step.id == "create_rollback" else "magnifier" if step.id == "validate_target" else "boot-gears" if step.id.startswith("update_") else "config-file" if step.id.startswith("write_") or step.id == "ensure_swap_file" else "arrow-right"
-            self._plan_changes_group.append(self._row_card(f"{idx}. {short}", "", icon))
+            number = Gtk.Label(label=str(idx), xalign=0)
+            number.add_css_class("dim-label")
+            number.set_valign(Gtk.Align.START)
+
+            title = step.title
+            if len(title) > 78:
+                title = title[:75].rstrip() + "..."
+            action = Gtk.Label(label=title, xalign=0, wrap=True)
+            action.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+            action.add_css_class("uhw-row-title")
+            action.set_valign(Gtk.Align.START)
+            action.set_hexpand(True)
+
+            status, kind = self._plan_step_badge(step)
+            badge = self._status_pill(status, kind)
+            badge.set_valign(Gtk.Align.START)
+
+            grid.attach(number, 0, idx, 1, 1)
+            grid.attach(action, 1, idx, 1, 1)
+            grid.attach(badge, 2, idx, 1, 1)
+        return grid
+
+    def _plan_add_short_changes(self) -> None:
+        self._plan_changes_group.append(self._compact_planned_changes_table())
+
+    def _plan_step_change_impact(self, step) -> str:
+        if step.id == "create_rollback":
+            return "Creates rollback metadata and file backups before any managed system file is changed."
+        if step.id == "ensure_swap_file":
+            return "Creates or resizes the managed swap file, activates it, and ensures the required fstab entry."
+        if step.id == "validate_target":
+            return "Re-probes the live swap target, UUID, and resume offset immediately before writes; apply aborts if validation fails."
+        if step.id == "write_resume_config":
+            return f"Writes {RESUME_FILE}; this is the initramfs resume source used during early boot."
+        if step.id == "write_grub_config":
+            return f"Writes {GRUB_FRAGMENT}; adds managed resume kernel parameters without directly rewriting /etc/default/grub."
+        if step.id == "update_initramfs":
+            return "Runs update-initramfs -u so the generated initramfs contains the selected resume configuration."
+        if step.id == "update_grub":
+            return "Runs update-grub so GRUB boot entries include the managed resume kernel parameters."
+        return step.detail or "Helper step included in the generated apply request."
+
+    def _plan_file_change_detail(self, path: str) -> str:
+        if path == RESUME_FILE:
+            return "Initramfs resume configuration. Expected content uses RESUME=UUID=... and resume_offset=... for swap files."
+        if path == GRUB_FRAGMENT:
+            return "Managed GRUB defaults fragment. It adds resume=UUID=... and resume_offset=... while preserving the main GRUB defaults file."
+        if path == "/etc/fstab":
+            return "Only touched for managed swap-file create/resize so the selected swap file remains available after reboot."
+        return "Managed file listed in the helper request."
+
+    def _plan_generated_config_preview(self) -> str:
+        if self.plan is None:
+            return "No plan."
+        if self.plan.swap_file_request is not None:
+            return (
+                "Resume config preview is generated after live swap-file creation because UUID and resume_offset "
+                "are only trusted after the helper re-probes the active file."
+            )
+        target = self.plan.selected_target
+        if not target.uuid:
+            return "Resume config preview unavailable because the selected target has no UUID."
+        lines = [f"RESUME=UUID={target.uuid}"]
+        if target.kind == "file":
+            if target.resume_offset is None:
+                lines.append("resume_offset=<missing>")
+            else:
+                lines.append(f"resume_offset={target.resume_offset}")
+        grub_params = [f"resume=UUID={target.uuid}"]
+        if target.kind == "file" and target.resume_offset is not None:
+            grub_params.append(f"resume_offset={target.resume_offset}")
+        return (
+            "Resume file preview:\n"
+            + " ".join(lines)
+            + "\n\nGRUB kernel parameters preview:\n"
+            + " ".join(grub_params)
+        )
+
+    def _plan_change_impact_table(self) -> Gtk.Grid:
+        grid = Gtk.Grid(column_spacing=12, row_spacing=6, hexpand=True)
+        grid.set_name("technical_change_impact_table")
+        grid.add_css_class("uhw-status-table")
+        headers = ["#", "Step ID", "Type", "Technical impact"]
+        for col, header in enumerate(headers):
+            label = Gtk.Label(label=header, xalign=0)
+            label.add_css_class("caption")
+            label.add_css_class("dim-label")
+            grid.attach(label, col, 0, 1, 1)
+        if self.plan is None:
+            return grid
+        for idx, step in enumerate(self.plan.steps, start=1):
+            number = Gtk.Label(label=str(idx), xalign=0)
+            number.add_css_class("dim-label")
+            step_id = Gtk.Label(label=step.id, xalign=0, selectable=True)
+            step_id.add_css_class("dim-label")
+            step_type, step_kind = self._plan_step_badge(step)
+            badge = self._status_pill(step_type, step_kind)
+            impact = Gtk.Label(label=self._plan_step_change_impact(step), xalign=0, wrap=True, selectable=True)
+            impact.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+            impact.set_hexpand(True)
+            impact.set_valign(Gtk.Align.START)
+            grid.attach(number, 0, idx, 1, 1)
+            grid.attach(step_id, 1, idx, 1, 1)
+            grid.attach(badge, 2, idx, 1, 1)
+            grid.attach(impact, 3, idx, 1, 1)
+        return grid
 
     def _plan_add_technical_details(self) -> None:
         if self.plan is None:
@@ -897,12 +1025,19 @@ class WizardWindow(Adw.ApplicationWindow):
             for warning in self.plan.warnings:
                 self._plan_details_group.append(self._row_card("Warning", warning, "warning", "Review", "warning"))
 
+        self._plan_details_group.append(self._row_card("Generated configuration preview", self._plan_generated_config_preview(), "config-file", "Preview"))
+        self._plan_details_group.append(self._row_card("Change impact details", "Each helper step, internal step ID, change type, and technical effect.", "review-apply", "Expanded"))
+        self._plan_details_group.append(self._plan_change_impact_table())
+
         for idx, step in enumerate(self.plan.steps, start=1):
             icon = "warning" if step.destructive else "arrow-right"
-            self._plan_details_group.append(self._row_card(f"{idx}. {step.title}", step.detail, icon))
+            detail = step.detail or self._plan_step_change_impact(step)
+            self._plan_details_group.append(self._row_card(f"{idx}. {step.title}", f"Step ID: {step.id}\n{detail}", icon))
 
         if self.plan.planned_files:
-            self._plan_details_group.append(self._row_card("Managed files", "\n".join(self.plan.planned_files), "config-file", "May change", "warning"))
+            for path in self.plan.planned_files:
+                self._plan_details_group.append(self._row_card("Managed file", f"{path}\n{self._plan_file_change_detail(path)}", "config-file", "May change", "warning"))
+        self._plan_details_group.append(self._row_card("Rollback scope", "Backs up managed files before writes and records a manifest for rollback.", "rollback-snapshot", "Before writes", "success"))
         self._plan_details_group.append(self._row_card("Rollback backup location", "/var/backups/ubuntu-hibernate-wizard/<backup_id>/manifest.json", "rollback-snapshot", "Before writes", "success"))
 
     def _render_plan(self) -> None:
