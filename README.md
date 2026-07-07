@@ -21,19 +21,6 @@
 
 <p align="center"><em>Real screenshots from Ubuntu Hibernate Wizard 0.4.3 RC4.</em></p>
 
-## Real application screenshots
-
-| Introduction | System Check |
-|---|---|
-| ![Introduction screen](docs/assets/screenshots/menu/01_introduction.png) | ![System Check screen](docs/assets/screenshots/menu/02_system_check.png) |
-
-| Configuration | Planned Modifications |
-|---|---|
-| ![Configuration screen](docs/assets/screenshots/menu/03_configuration.png) | ![Planned Modifications screen](docs/assets/screenshots/menu/04_planned_modifications.png) |
-
-| Review & Apply | Finish |
-|---|---|
-| ![Review and Apply screen](docs/assets/screenshots/menu/05_review_apply.png) | ![Finish screen](docs/assets/screenshots/menu/06_finish.png) |
 
 
 ## Why this exists
