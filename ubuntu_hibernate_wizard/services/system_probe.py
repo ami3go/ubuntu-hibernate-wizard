@@ -114,6 +114,8 @@ def load_fake_system_data(root: str | Path) -> dict[str, Any]:
         "initramfs_tools": metadata.get("initramfs_tools", True),
         "update_initramfs_exists": metadata.get("update_initramfs_exists", True),
         "read_only_config": bool(metadata.get("read_only_config", False)),
+        "root_total_bytes": int(metadata.get("root_total_bytes") or 128 * 1024**3),
+        "root_free_bytes": int(metadata.get("root_free_bytes") or 96 * 1024**3),
     }
     details_path = root / "commands/swap-details.json"
     if details_path.exists():
@@ -141,6 +143,13 @@ def probe_current_system() -> dict:
     data["sb"] = _run(["mokutil", "--sb-state"]).stdout.strip() if shutil.which("mokutil") else "unknown"
     data["root"] = _run(["findmnt", "-no", "SOURCE,FSTYPE,UUID", "/"]).stdout if shutil.which("findmnt") else ""
     data["findmnt_root"] = data["root"]
+    try:
+        usage = shutil.disk_usage("/")
+        data["root_total_bytes"] = int(usage.total)
+        data["root_free_bytes"] = int(usage.free)
+    except OSError:
+        data["root_total_bytes"] = 0
+        data["root_free_bytes"] = 0
     data["kernel"] = _run(["uname", "-r"]).stdout.strip()
     data["timeshift_available"] = bool(shutil.which("timeshift"))
     data["initramfs_resume"] = _read(RESUME_FILE)
@@ -427,6 +436,8 @@ def profile_from_probe_data(data: dict) -> SystemProfile:
         cmdline=data.get("cmdline", ""),
         initramfs_resume=data.get("initramfs_resume", ""),
         fstab=data.get("fstab", ""),
+        root_total_bytes=int(data.get("root_total_bytes") or 0),
+        root_free_bytes=int(data.get("root_free_bytes") or 0),
         candidates=candidates,
         raw=data,
     )

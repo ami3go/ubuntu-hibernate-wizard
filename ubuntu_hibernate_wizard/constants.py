@@ -2,7 +2,7 @@
 
 APP_ID = "io.github.ami3go.UbuntuHibernateWizard"
 APP_NAME = "Ubuntu Hibernate Wizard"
-APP_VERSION = "0.4.3-rc4"
+APP_VERSION = "0.4.3-rc6"
 EXECUTABLE_NAME = "ubuntu-hibernate-wizard"
 HELPER_EXECUTABLE = "ubuntu-hibernate-wizard-helper"
 HELPER_PATH = "/usr/libexec/ubuntu-hibernate-wizard/ubuntu-hibernate-wizard-helper"

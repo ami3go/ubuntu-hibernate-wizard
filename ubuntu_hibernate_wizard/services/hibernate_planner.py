@@ -22,6 +22,7 @@ DEFAULT_SWAPFILE_PATH = "/swap.img"
 FSTAB_FILE = "/etc/fstab"
 MIN_SWAPFILE_BYTES = 1 * GIB
 MAX_SWAPFILE_BYTES = 128 * GIB
+MIN_ROOT_FREE_AFTER_SWAPFILE_BYTES = 1 * GIB
 
 
 @dataclass(slots=True)
@@ -121,6 +122,60 @@ def swapfile_slider_marks(ram_bytes: int) -> list[tuple[str, int]]:
     return marks
 
 
+def existing_swapfile_size(profile: SystemProfile, path: str = DEFAULT_SWAPFILE_PATH) -> int:
+    """Return the detected active swap-file size for path, or zero if not active/detected."""
+    for target in profile.candidates:
+        if target.path == path and target.kind == "file":
+            return int(target.size_bytes or 0)
+    return 0
+
+
+def swapfile_allocation_required_bytes(profile: SystemProfile, request: SwapFileRequest) -> int:
+    """Return extra free bytes required before safely touching a managed swap file.
+
+    The helper keeps the old swap file beside the new one until the new file is
+    allocated and swapon succeeds.  Therefore any create/resize operation needs
+    enough *current free space* for the full requested new file, not merely the
+    size delta.  If the detected file already has exactly the requested size,
+    no new allocation is required.
+    """
+    existing_size = existing_swapfile_size(profile, request.path)
+    return 0 if existing_size == request.size_bytes and existing_size > 0 else request.size_bytes
+
+
+def swapfile_free_space_problem(profile: SystemProfile, request: SwapFileRequest) -> str | None:
+    """Return a user-facing blocker string if the managed swap file cannot fit."""
+    if request.size_bytes < profile.ram_bytes:
+        return (
+            f"Managed swap-file size {format_bytes_gib(request.size_bytes)} is smaller than "
+            f"detected RAM {format_bytes_gib(profile.ram_bytes)}"
+        )
+    available = int(profile.root_free_bytes or 0)
+    if available <= 0:
+        return "Cannot verify free disk space on / before managed swap-file creation"
+    required = swapfile_allocation_required_bytes(profile, request)
+    required_with_reserve = required + MIN_ROOT_FREE_AFTER_SWAPFILE_BYTES if required else 0
+    if required_with_reserve and available < required_with_reserve:
+        return (
+            "Not enough free space on / for managed swap-file create/resize: "
+            f"available {format_bytes_gib(available)}, required {format_bytes_gib(required_with_reserve)} "
+            f"({format_bytes_gib(required)} swap file + {format_bytes_gib(MIN_ROOT_FREE_AFTER_SWAPFILE_BYTES)} safety reserve)"
+        )
+    return None
+
+
+def swapfile_free_space_summary(profile: SystemProfile, request: SwapFileRequest) -> str:
+    available = int(profile.root_free_bytes or 0)
+    required = swapfile_allocation_required_bytes(profile, request)
+    reserve = MIN_ROOT_FREE_AFTER_SWAPFILE_BYTES if required else 0
+    return (
+        f"Free space on /: {format_bytes_gib(available)}; "
+        f"requested swap file: {format_bytes_gib(request.size_bytes)}; "
+        f"allocation required before writes: {format_bytes_gib(required)}"
+        + (f"; safety reserve: {format_bytes_gib(reserve)}" if reserve else "")
+    )
+
+
 @dataclass(slots=True)
 class PlannedStep:
     id: str
@@ -190,6 +245,9 @@ def build_swapfile_modification_plan(profile: SystemProfile, request: SwapFileRe
     # Existing-swap absence must not block the create/resize path; the whole
     # purpose of this plan is to make a valid disk swap target.
     blockers = [b for b in blockers if b != "No existing active disk swap target is usable for hibernation"]
+    free_space_problem = swapfile_free_space_problem(profile, request)
+    if free_space_problem:
+        blockers.append(free_space_problem)
     if profile.raw.get("read_only_config"):
         # Keep the explicit read-only blocker.
         pass
@@ -218,6 +276,7 @@ def build_swapfile_modification_plan(profile: SystemProfile, request: SwapFileRe
     warnings = [
         "Swap-file creation/resizing changes disk usage and may briefly switch swap state; review carefully before applying.",
         "The helper will accept only /swap.img or /swapfile on a supported local filesystem and will re-probe before writing resume config.",
+        swapfile_free_space_summary(profile, request),
     ]
     return ModificationPlan(placeholder, steps, [RESUME_FILE, GRUB_FRAGMENT, FSTAB_FILE], warnings, _dedupe(blockers), request)
 

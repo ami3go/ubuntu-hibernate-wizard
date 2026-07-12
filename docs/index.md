@@ -11,7 +11,7 @@ Ubuntu Hibernate Wizard is a native GTK4/libadwaita desktop wizard for configuri
 
 These screenshots are captured from a real Ubuntu desktop running the application.
 
-Version **0.4.3 RC4** is a real-system-tested release candidate. It supports existing valid swap partitions/swap files and a controlled managed `/swap.img` create/resize flow. It does **not** repartition disks, change Secure Boot settings, or reboot the computer.
+Version **0.4.3 RC6** is a real-system-tested release candidate. It supports existing valid swap partitions/swap files and a controlled managed `/swap.img` create/resize flow. It does **not** repartition disks, change Secure Boot settings, or reboot the computer.
 
 ## Managed files
 

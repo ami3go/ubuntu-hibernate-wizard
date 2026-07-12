@@ -34,7 +34,7 @@ from ubuntu_hibernate_wizard.constants import (  # noqa: E402
 from ubuntu_hibernate_wizard.core import parsers, system  # noqa: E402
 from ubuntu_hibernate_wizard.core import rollback as rb  # noqa: E402
 from ubuntu_hibernate_wizard.services.hibernate_planner import (  # noqa: E402
-    FSTAB_FILE, SwapFileRequest, build_modification_plan,
+    FSTAB_FILE, GIB, MIN_ROOT_FREE_AFTER_SWAPFILE_BYTES, SwapFileRequest, build_modification_plan,
     generated_grub_fragment, generated_resume_config,
 )
 from ubuntu_hibernate_wizard.services.system_probe import (  # noqa: E402
@@ -822,6 +822,30 @@ def _run_checked(argv: list[str], *, timeout: int = 120) -> None:
         raise RuntimeError((r.stderr or r.stdout or "command failed").strip())
 
 
+def _format_gib(size_bytes: int) -> str:
+    return f"{size_bytes / GIB:.1f} GiB"
+
+
+def _preflight_swapfile_free_space(path: str, size_bytes: int, *, needs_new_file: bool) -> None:
+    """Fail before swapoff/rename/boot writes if the requested swap file cannot fit."""
+    if not needs_new_file:
+        return
+    parent = str(Path(path).parent)
+    try:
+        usage = shutil.disk_usage(parent)
+    except OSError as exc:
+        raise RuntimeError("CANNOT_VERIFY_FREE_SPACE") from exc
+    required = int(size_bytes) + int(MIN_ROOT_FREE_AFTER_SWAPFILE_BYTES)
+    if usage.free < required:
+        raise RuntimeError(
+            "INSUFFICIENT_FREE_SPACE_FOR_SWAPFILE:"
+            f"available={_format_gib(usage.free)},"
+            f"required={_format_gib(required)},"
+            f"swap={_format_gib(size_bytes)},"
+            f"reserve={_format_gib(MIN_ROOT_FREE_AFTER_SWAPFILE_BYTES)}"
+        )
+
+
 def _make_swap_file(path: str, size_bytes: int) -> None:
     # The helper is root-only here.  Refuse symlinks/non-regular files before writing.
     p = Path(path)
@@ -860,6 +884,7 @@ def _ensure_managed_swap_file(request: SwapFileRequest, bm: rb.BackupManager | N
     existing_size = p.stat().st_size if p.exists() else 0
     active_before = _is_active_swap(path)
     needs_new_file = (not p.exists()) or existing_size != size
+    _preflight_swapfile_free_space(path, size, needs_new_file=needs_new_file)
     fstab_changed = _ensure_fstab_entry(path, bm, dry_run=dry_run)
     if dry_run:
         message = f"Dry-run: would {'create/resize' if needs_new_file else 'keep'} {path} at {size // (1024 ** 3)} GiB"
@@ -938,7 +963,11 @@ def run_one_shot(req: dict) -> int:
 
         if action == "validate-plan":
             if swap_req is not None:
-                _event(request_id, "plan-valid", step_id="validate_target", status="success", progress=0.5, message="Managed swap-file request is structurally valid; live UUID/offset validation happens during real apply after creation")
+                p = Path(swap_req.path)
+                existing_size = p.stat().st_size if p.exists() and p.is_file() else 0
+                needs_new_file = (not p.exists()) or existing_size != swap_req.size_bytes
+                _preflight_swapfile_free_space(swap_req.path, swap_req.size_bytes, needs_new_file=needs_new_file)
+                _event(request_id, "plan-valid", step_id="validate_target", status="success", progress=0.5, message="Managed swap-file request is structurally valid and free-space preflight passed; live UUID/offset validation happens during real apply after creation")
             else:
                 _event(request_id, "step", step_id="validate_target", status="running", progress=0.10, message="Re-probing and validating selected swap target")
                 _validate_target_live(target)

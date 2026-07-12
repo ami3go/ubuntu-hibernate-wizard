@@ -20,6 +20,8 @@ def _profile_without_swap() -> SystemProfile:
         power_state="freeze mem disk",
         bootloader="grub",
         initramfs="initramfs-tools",
+        root_total_bytes=128 * 1024**3,
+        root_free_bytes=96 * 1024**3,
         candidates=[],
     )
 
@@ -88,6 +90,7 @@ def test_validate_plan_for_swapfile_request_is_non_mutating(monkeypatch, capsys)
         raise AssertionError("validate-plan must not create rollback snapshots")
 
     monkeypatch.setattr(helper.rb.BackupManager, "begin", forbidden_begin)
+    monkeypatch.setattr(helper, "_preflight_swapfile_free_space", lambda *_args, **_kwargs: None)
     assert helper.run_one_shot(req) == 0
     out = capsys.readouterr().out
     assert "Plan is valid" in out

@@ -25,7 +25,7 @@ def test_readme_uses_real_screenshots() -> None:
     assert "Real application screenshots" in readme
     assert "docs/assets/screenshots/menu/00_contact_sheet_all_menu_steps.png" in readme
     assert "docs/assets/screenshots/menu/04_planned_modifications.png" in readme
-    assert "0.4.3 RC4" in readme
+    assert "0.4.3 RC6" in readme
 
 
 def test_github_pages_use_real_screenshots() -> None:
@@ -33,7 +33,7 @@ def test_github_pages_use_real_screenshots() -> None:
     screenshots = Path("docs/screenshots-and-examples.md").read_text(encoding="utf-8")
     real_page = Path("docs/real-screenshots.md").read_text(encoding="utf-8")
     assert "real GTK4 menu screens" in index
-    assert "0.4.3 RC4" in screenshots
+    assert "0.4.3 RC6" in screenshots
     assert "assets/screenshots/menu/05_review_apply.png" in screenshots
     assert "Real screenshots" in real_page
     assert "Real Screenshots: real-screenshots.md" in Path("mkdocs.yml").read_text(encoding="utf-8")

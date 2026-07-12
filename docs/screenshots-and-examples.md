@@ -5,7 +5,7 @@ description: GTK4 Ubuntu Hibernate Wizard screenshots, planned modification exam
 
 # Screenshots and examples
 
-These real screenshots show the Ubuntu Hibernate Wizard 0.4.3 RC4 GTK4/libadwaita workflow running on an Ubuntu desktop: check the system, choose an existing swap target or managed `/swap.img`, review managed file changes, apply through the helper, and reboot manually.
+These real screenshots show the Ubuntu Hibernate Wizard 0.4.3 RC6 GTK4/libadwaita workflow running on an Ubuntu desktop: check the system, choose an existing swap target or managed `/swap.img`, review managed file changes, apply through the helper, and reboot manually.
 
 ## Complete menu overview
 

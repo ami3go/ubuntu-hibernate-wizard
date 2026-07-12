@@ -18,7 +18,10 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk, Pango  # noqa: E402
 
 from ubuntu_hibernate_wizard.constants import APP_ID, APP_NAME, APP_VERSION, RESUME_FILE, GRUB_FRAGMENT
-from ubuntu_hibernate_wizard.services.hibernate_planner import SwapFileRequest, suggested_swap_sizes, swapfile_slider_marks, DEFAULT_SWAPFILE_PATH, GIB
+from ubuntu_hibernate_wizard.services.hibernate_planner import (
+    SwapFileRequest, suggested_swap_sizes, swapfile_slider_marks, DEFAULT_SWAPFILE_PATH, GIB,
+    swapfile_free_space_problem, swapfile_free_space_summary,
+)
 from ubuntu_hibernate_wizard.services.swap_target_model import SwapTarget, format_bytes_gib
 
 HIBERNATE_STATUS_EXTENSION_URL = "https://extensions.gnome.org/extension/755/hibernate-status-button/"
@@ -489,7 +492,7 @@ class WizardWindow(Adw.ApplicationWindow):
         next_btn.set_name("btn_continue_configuration")
         next_btn.connect("clicked", lambda *_: self._show_page("config"))
         self._check_next_btn = next_btn
-        next_btn.set_sensitive(self.detect_info is not None and not self.detect_info.hard_stop)
+        next_btn.set_sensitive(self.detect_info is not None and self.detect_info.can_continue_to_configuration)
         box.append(self._button_row(refresh, export, next_btn))
         if self.detect_info is None:
             GLib.idle_add(lambda: (self._start_detect(), False)[1])
@@ -532,7 +535,7 @@ class WizardWindow(Adw.ApplicationWindow):
             if info.recommended_target is None and info.profile is not None:
                 self._swapfile_size_bytes = suggested_swap_sizes(info.profile.ram_bytes)[1][1]
                 self.swap_file_request = SwapFileRequest(DEFAULT_SWAPFILE_PATH, self._swapfile_size_bytes)
-            self._step_state["check"] = "error" if info.hard_stop else "warning" if any(r[2] == "warning" for r in info.rows) else "passed"
+            self._step_state["check"] = "error" if not info.can_continue_to_configuration else "warning" if info.hard_stop or any(r[2] == "warning" for r in info.rows) else "passed"
             self._render_detect_info()
         self._refresh_sidebar()
         return False
@@ -550,15 +553,16 @@ class WizardWindow(Adw.ApplicationWindow):
         for child in list(self._check_group):
             self._check_group.remove(child)
         assert self.detect_info is not None
-        title = "Ready" if not self.detect_info.hard_stop else "Blocked"
-        if not self.detect_info.hard_stop and any(r[2] == "warning" for r in self.detect_info.rows):
+        can_configure = self.detect_info.can_continue_to_configuration
+        title = "Ready" if can_configure else "Blocked"
+        if can_configure and (self.detect_info.hard_stop or any(r[2] == "warning" for r in self.detect_info.rows)):
             title = "Ready with warnings"
         if hasattr(self, "_check_summary_label"):
             self._check_summary_label.set_label(f"Summary: {title}")
             self._check_summary_label.set_tooltip_text(None)
         for title_, detail, cls, status in self.detect_info.rows:
             self._append_check_row(title_, detail, cls, status)
-        self._check_next_btn.set_sensitive(not self.detect_info.hard_stop)
+        self._check_next_btn.set_sensitive(self.detect_info.can_continue_to_configuration)
 
     def _append_check_row(self, title: str, detail: str, cls: str, status: str) -> None:
         icon = {"success": "success-check", "warning": "warning", "error": "error"}.get(cls, "status-pending")
@@ -719,17 +723,44 @@ class WizardWindow(Adw.ApplicationWindow):
         if hasattr(self, "_config_next_btn"):
             self._config_next_btn.set_sensitive(self._config_can_continue())
 
+    def _swapfile_free_space_problem(self) -> str | None:
+        if self.swap_file_request is None or self.profile is None:
+            return None
+        return swapfile_free_space_problem(self.profile, self.swap_file_request)
+
     def _update_swapfile_status(self) -> None:
         if not hasattr(self, "_swapfile_status"):
             return
         size_gib = int(round(self._default_swapfile_size_bytes() / GIB))
         if self.swap_file_request is not None:
-            self._swapfile_status.set_label(f"Selected: create or resize /swap.img to {size_gib} GiB. This will be shown in Planned Modifications before Apply.")
+            problem = self._swapfile_free_space_problem()
+            summary = swapfile_free_space_summary(self.profile, self.swap_file_request) if self.profile else ""
+            if problem:
+                self._swapfile_status.set_label(
+                    f"Not enough space for selected managed /swap.img size. {problem}. "
+                    "Free up disk space or choose a smaller size that is still at least RAM-sized before continuing. "
+                    + summary
+                )
+            else:
+                self._swapfile_status.set_label(
+                    f"Selected: create or resize /swap.img to {size_gib} GiB. "
+                    "Free-space preflight passed. This will be shown in Planned Modifications before Apply. "
+                    + summary
+                )
         else:
-            self._swapfile_status.set_label(f"Not selected. Current prepared size value: {size_gib} GiB.")
+            if self.profile is not None:
+                free = self.profile.root_free_bytes
+                self._swapfile_status.set_label(
+                    f"Not selected. Current prepared size value: {size_gib} GiB. "
+                    f"Free space on /: {format_bytes_gib(free)}."
+                )
+            else:
+                self._swapfile_status.set_label(f"Not selected. Current prepared size value: {size_gib} GiB.")
 
     def _config_can_continue(self) -> bool:
-        return self.swap_file_request is not None or (self.selected_target is not None and self.selected_target.selectable)
+        if self.swap_file_request is not None:
+            return self._swapfile_free_space_problem() is None
+        return self.selected_target is not None and self.selected_target.selectable
 
     def _config_selection(self):
         return self.swap_file_request if self.swap_file_request is not None else self.selected_target

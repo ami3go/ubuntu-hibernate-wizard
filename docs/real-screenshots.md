@@ -1,6 +1,6 @@
 ---
 title: Real screenshots
-description: Real Ubuntu Hibernate Wizard 0.4.3 RC4 screenshots captured from an Ubuntu desktop session.
+description: Real Ubuntu Hibernate Wizard 0.4.3 RC6 screenshots captured from an Ubuntu desktop session.
 ---
 
 # Real screenshots

@@ -28,6 +28,10 @@ from ubuntu_hibernate_wizard.services.swap_target_model import SwapTarget, Syste
 BACKUP_DIR_BASE = "/var/backups/ubuntu-hibernate-wizard"
 ProgressCB = Callable[[float | int, str], None]
 
+CONFIGURATION_RECOVERABLE_BLOCKERS = {
+    "No existing active disk swap target is usable for hibernation",
+}
+
 
 @dataclass
 class DetectInfo:
@@ -43,6 +47,25 @@ class DetectInfo:
     @property
     def recommended_target(self) -> SwapTarget | None:
         return self.profile.recommended_target if self.profile else None
+
+    @property
+    def configuration_blocking_reasons(self) -> list[str]:
+        """Blockers that really prevent opening Configuration.
+
+        A missing/too-small existing swap target must not block Configuration:
+        the Configuration page is where the user can create or resize the
+        managed /swap.img file.
+        """
+        if self.profile is None:
+            return ["System profile is unavailable"]
+        return [
+            reason for reason in self.profile.blocking_reasons
+            if reason not in CONFIGURATION_RECOVERABLE_BLOCKERS
+        ]
+
+    @property
+    def can_continue_to_configuration(self) -> bool:
+        return not self.configuration_blocking_reasons
 
 
 class HelperSession:

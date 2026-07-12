@@ -88,6 +88,8 @@ class SystemProfile:
     cmdline: str = ""
     initramfs_resume: str = ""
     fstab: str = ""
+    root_total_bytes: int = 0
+    root_free_bytes: int = 0
     candidates: list[SwapTarget] = field(default_factory=list)
     raw: dict = field(default_factory=dict)
 
